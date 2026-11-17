@@ -5,17 +5,20 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { FaBriefcase, FaGraduationCap, FaCalendarAlt, FaMapMarkerAlt } from 'react-icons/fa';
+import { getSiteContent } from '../lib/siteContent';
 
 export default function ExperiencePage() {
   const { data: experiences, isLoading } = useQuery(['experience'], () =>
     axios.get('/api/experience').then((r) => r.data)
   );
+  const { data: siteInfo } = useQuery(['siteInfo'], () => axios.get('/api/siteinfo').then((r) => r.data));
+  const content = getSiteContent(siteInfo);
 
   return (
     <>
       <Head>
-        <title>Experience &amp; Career — Suraj Gupta</title>
-        <meta name="description" content="Professional experience and career timeline of Suraj Gupta" />
+        <title>{content.experience.title} — {siteInfo?.name || 'Suraj Gupta'}</title>
+        <meta name="description" content={content.experience.metaDescription} />
       </Head>
 
       <Navbar />
@@ -25,13 +28,13 @@ export default function ExperiencePage() {
           <div className="mx-auto max-w-5xl">
             <div className="text-center max-w-3xl mx-auto mb-16">
               <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/25 bg-blue-500/10 px-4 py-1.5 text-sm text-blue-300 mb-4">
-                Career History
+                {content.experience.eyebrow}
               </div>
               <h1 className="text-3xl font-bold text-slate-50 sm:text-4xl lg:text-5xl">
-                Work <span className="text-gradient">Experience</span>
+                {content.experience.title}
               </h1>
               <p className="mt-4 text-lg text-slate-300">
-                My professional journey designing, building, and scaling software applications.
+                {content.experience.description}
               </p>
             </div>
 
@@ -93,18 +96,18 @@ export default function ExperiencePage() {
             {/* Education Milestone */}
             <div className="mt-20 border-t border-slate-800/80 pt-16">
               <h2 className="text-2xl font-bold text-slate-50 mb-8 flex items-center gap-3">
-                <FaGraduationCap className="text-blue-400" /> Education &amp; Training
+                <FaGraduationCap className="text-blue-400" /> {content.experience.educationTitle}
               </h2>
               <div className="rounded-2xl border border-slate-700/60 bg-slate-900/55 p-6 md:p-8">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
-                    <h3 className="text-lg font-bold text-slate-100">Bachelor of Computer Science / Applications</h3>
-                    <p className="text-sm text-blue-400 font-medium">Computer Software Engineering</p>
+                    <h3 className="text-lg font-bold text-slate-100">{content.experience.educationDegree}</h3>
+                    <p className="text-sm text-blue-400 font-medium">{content.experience.educationField}</p>
                   </div>
-                  <span className="text-xs text-slate-400">Graduated with Honors</span>
+                  <span className="text-xs text-slate-400">{content.experience.educationResult}</span>
                 </div>
                 <p className="text-sm text-slate-400 mt-4 leading-relaxed">
-                  Specialized in Data Structures, Relational &amp; NoSQL Database Design, Object-Oriented Software Architecture, and Full-Stack Web Technologies.
+                  {content.experience.educationDescription}
                 </p>
               </div>
             </div>
@@ -115,17 +118,17 @@ export default function ExperiencePage() {
         <section className="py-16 px-4 sm:px-6 lg:px-8 border-t border-slate-800/60">
           <div className="mx-auto max-w-4xl text-center">
             <h2 className="text-2xl font-bold text-slate-50 sm:text-3xl">
-              Interested in My <span className="text-gradient">Background</span>?
+              {content.experience.ctaTitle}
             </h2>
             <p className="mt-4 text-lg text-slate-300">
-              Download my updated curriculum vitae or get directly in touch for recruitment opportunities.
+              {content.experience.ctaDescription}
             </p>
             <div className="mt-8 flex justify-center gap-4">
               <Link
                 href="/contact"
                 className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 px-6 py-3 text-sm font-medium text-white shadow-lg transition hover:from-blue-500 hover:to-blue-400"
               >
-                Connect With Me
+                {content.experience.ctaButton}
               </Link>
             </div>
           </div>

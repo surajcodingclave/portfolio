@@ -1,4 +1,11 @@
+import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
+import { getSiteContent } from '../lib/siteContent';
+
 export default function ProjectCard({ project }) {
+  const { data: siteInfo } = useQuery(['siteInfo'], () => axios.get('/api/siteinfo').then((r) => r.data));
+  const content = getSiteContent(siteInfo).projects;
+
   return (
     <article className="group overflow-hidden rounded-2xl border border-slate-700/60 bg-slate-900/55 transition-all duration-300 hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-950/20">
       {project.imageUrl && (
@@ -23,13 +30,13 @@ export default function ProjectCard({ project }) {
           {project.demoUrl && (
             <a href={project.demoUrl} target="_blank" rel="noopener noreferrer"
               className="text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors">
-              Live Demo &rarr;
+              {content.demoLinkLabel} &rarr;
             </a>
           )}
           {project.repoUrl && (
             <a href={project.repoUrl} target="_blank" rel="noopener noreferrer"
               className="text-sm font-medium text-slate-400 hover:text-slate-300 transition-colors">
-              Source Code
+              {content.sourceLinkLabel}
             </a>
           )}
         </div>
@@ -43,7 +50,7 @@ export default function ProjectCard({ project }) {
           </ul>
         )}
         <p className="mt-auto text-xs font-medium text-slate-500 transition-colors group-hover:text-blue-400">
-          View Details &rarr;
+          {content.detailsLabel} &rarr;
         </p>
       </div>
     </article>

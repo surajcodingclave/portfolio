@@ -11,7 +11,7 @@ const AdminSchema = new mongoose.Schema({
 });
 const Admin = mongoose.models.Admin || mongoose.model('Admin', AdminSchema);
 
-export default NextAuth({
+export const authOptions = {
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -31,4 +31,6 @@ export default NextAuth({
   ],
   secret: process.env.NEXTAUTH_SECRET,
   session: { strategy: 'jwt' },
-});
+};
+
+export default NextAuth(authOptions);

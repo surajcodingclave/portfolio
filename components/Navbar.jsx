@@ -2,20 +2,26 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useState } from 'react';
 import { useRouter } from 'next/router';
+import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
+import { getSiteContent } from '../lib/siteContent';
 
 export default function Navbar() {
   const { data: session } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
+  const { data: siteInfo } = useQuery(['siteInfo'], () => axios.get('/api/siteinfo').then((r) => r.data));
+  const content = getSiteContent(siteInfo);
+  const navigation = content.navigation;
 
   const links = [
-    { href: '/', label: 'Home' },
-    { href: '/about', label: 'About' },
-    { href: '/services', label: 'Services' },
-    { href: '/skills', label: 'Skills' },
-    { href: '/experience', label: 'Experience' },
-    { href: '/projects', label: 'Projects' },
-    { href: '/contact', label: 'Contact' },
+    { href: '/', label: navigation.homeLabel },
+    { href: '/about', label: navigation.aboutLabel },
+    { href: '/services', label: navigation.servicesLabel },
+    { href: '/skills', label: navigation.skillsLabel },
+    { href: '/experience', label: navigation.experienceLabel },
+    { href: '/projects', label: navigation.projectsLabel },
+    { href: '/contact', label: navigation.contactLabel },
   ];
 
   const isActive = (href) => router.pathname === href;
@@ -25,7 +31,7 @@ export default function Navbar() {
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="font-display text-xl font-bold text-slate-50 hover:text-blue-400 transition-colors">
-          Suraj<span className="text-blue-400">.</span>
+          {navigation.logoText}<span className="text-blue-400">.</span>
         </Link>
 
         {/* Desktop nav */}
@@ -52,7 +58,7 @@ export default function Navbar() {
             href="/contact"
             className="inline-flex items-center rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-blue-950/30 transition hover:from-blue-500 hover:to-blue-400"
           >
-            Hire Me
+            {navigation.hireMeLabel}
           </Link>
           {session ? (
             <Link href="/admin/dashboard" className="text-sm font-medium text-blue-400 hover:underline">
@@ -102,7 +108,7 @@ export default function Navbar() {
               onClick={() => setMobileOpen(false)}
               className="block rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 px-3 py-2 text-center text-sm font-medium text-white"
             >
-              Hire Me
+              {navigation.hireMeLabel}
             </Link>
             <Link
               href="/admin/dashboard"

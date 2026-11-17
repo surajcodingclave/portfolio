@@ -4,6 +4,7 @@ import Footer from '../components/Footer';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
+import { getSiteContent } from '../lib/siteContent';
 
 export default function AboutPage() {
   const { data: siteInfo } = useQuery(['siteInfo'], () =>
@@ -16,11 +17,14 @@ export default function AboutPage() {
     'Django', 'PostgreSQL', 'MySQL', 'Redis', 'Docker',
     'Git', 'REST API', 'GraphQL', 'AWS', 'Firebase',
   ];
+  const content = getSiteContent(siteInfo);
+  const about = content.about;
 
   return (
     <>
       <Head>
-        <title>About — {siteInfo?.name || 'Suraj Gupta'}</title>
+        <title>{about.title} — {siteInfo?.name || 'Suraj Gupta'}</title>
+        <meta name="description" content={about.metaDescription} />
       </Head>
 
       <Navbar />
@@ -46,7 +50,7 @@ export default function AboutPage() {
               {/* Intro */}
               <div>
                 <h1 className="text-3xl font-bold text-slate-50 sm:text-4xl lg:text-5xl">
-                  About <span className="text-gradient">Me</span>
+                  {about.title}
                 </h1>
                 <p className="mt-6 text-lg leading-relaxed text-slate-300">
                   {siteInfo?.bio || "I'm Suraj Gupta, a passionate Full-Stack Web Developer specializing in MERN Stack, PHP with Laravel, and Python with Django. I love building modern, scalable web applications that solve real-world problems."}
@@ -60,27 +64,21 @@ export default function AboutPage() {
         <section className="px-4 sm:px-6 lg:px-8 py-12">
           <div className="mx-auto max-w-7xl grid gap-8 md:grid-cols-3">
             <article className="rounded-2xl border border-slate-700/60 bg-slate-900/55 p-6">
-              <h2 className="text-xl font-semibold text-slate-50 mb-4">Who I Am</h2>
+              <h2 className="text-xl font-semibold text-slate-50 mb-4">{about.whoTitle}</h2>
               <p className="text-sm leading-relaxed text-slate-400">
-                A dedicated full-stack engineer with expertise in building end-to-end web applications.
-                I thrive on turning complex problems into elegant, user-friendly solutions using modern
-                technologies and best practices.
+              {about.whoDescription}
               </p>
             </article>
             <article className="rounded-2xl border border-slate-700/60 bg-slate-900/55 p-6">
-              <h2 className="text-xl font-semibold text-slate-50 mb-4">What I Build</h2>
+              <h2 className="text-xl font-semibold text-slate-50 mb-4">{about.whatTitle}</h2>
               <p className="text-sm leading-relaxed text-slate-400">
-                From responsive SPAs and RESTful APIs to full-stack e-commerce platforms and CMS solutions.
-                I work across the MERN stack, Laravel, and Django to deliver production-ready products
-                with clean architecture and scalable backends.
+              {about.whatDescription}
               </p>
             </article>
             <article className="rounded-2xl border border-slate-700/60 bg-slate-900/55 p-6">
-              <h2 className="text-xl font-semibold text-slate-50 mb-4">How I Work</h2>
+              <h2 className="text-xl font-semibold text-slate-50 mb-4">{about.howTitle}</h2>
               <p className="text-sm leading-relaxed text-slate-400">
-                I follow agile methodologies, write clean and documented code, implement CI/CD pipelines,
-                and prioritize performance and security. I believe in continuous learning and staying
-                up-to-date with the latest industry trends.
+              {about.howDescription}
               </p>
             </article>
           </div>
@@ -90,7 +88,7 @@ export default function AboutPage() {
         <section className="px-4 sm:px-6 lg:px-8 py-12">
           <div className="mx-auto max-w-7xl">
             <h2 className="text-2xl font-bold text-slate-50 mb-8">
-              Skills <span className="text-gradient">Overview</span>
+              {about.skillsTitle}
             </h2>
             <div className="flex flex-wrap gap-2">
               {skills.map((skill, i) => (
@@ -109,17 +107,17 @@ export default function AboutPage() {
         <section className="py-16 px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-4xl text-center">
             <h2 className="text-2xl font-bold text-slate-50 sm:text-3xl">
-              Ready to Start Your <span className="text-gradient">Project</span>?
+              {about.ctaTitle}
             </h2>
-            <p className="mt-4 text-lg text-slate-300">Let&apos;s work together to build something amazing.</p>
+            <p className="mt-4 text-lg text-slate-300">{about.ctaDescription}</p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
               <Link href="/contact"
                 className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 px-6 py-3 text-sm font-medium text-white shadow-lg shadow-blue-950/30 transition hover:from-blue-500 hover:to-blue-400">
-                Get In Touch
+                {about.ctaPrimary}
               </Link>
               <Link href="/projects"
                 className="inline-flex items-center justify-center rounded-lg border border-slate-700 px-6 py-3 text-sm font-medium text-slate-300 transition hover:border-slate-600 hover:bg-slate-800/50 hover:text-slate-50">
-                View My Work
+                {about.ctaSecondary}
               </Link>
             </div>
           </div>

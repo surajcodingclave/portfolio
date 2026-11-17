@@ -2,6 +2,7 @@ import nextConnect from 'next-connect';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { requireAdmin } from '../../lib/requireAdmin';
 
 // Ensure the upload directory exists
 const uploadDir = './public/uploads';
@@ -28,6 +29,10 @@ const apiRoute = nextConnect({
   onNoMatch(req, res) {
     res.status(405).json({ error: `Method '${req.method}' Not Allowed` });
   },
+});
+
+apiRoute.use(async (req, res, next) => {
+  if (await requireAdmin(req, res)) next();
 });
 
 apiRoute.use(upload.single('file'));

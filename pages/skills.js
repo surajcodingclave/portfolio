@@ -6,40 +6,22 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { FaReact, FaNodeJs, FaPhp, FaPython, FaDatabase, FaTools } from 'react-icons/fa';
+import { getSiteContent, defaultSkillCategories } from '../lib/siteContent';
 
 export default function SkillsPage() {
   const { data: siteInfo } = useQuery(['siteInfo'], () =>
     axios.get('/api/siteinfo').then((r) => r.data)
   );
 
-  const skillCategories = [
-    {
-      category: 'Frontend Engineering',
-      icon: FaReact,
-      skills: ['React.js', 'Next.js', 'TypeScript', 'Tailwind CSS', 'Redux Toolkit', 'HTML5 / CSS3', 'JavaScript (ES6+)'],
-    },
-    {
-      category: 'Backend & Server-side',
-      icon: FaNodeJs,
-      skills: ['Node.js', 'Express.js', 'PHP (Laravel)', 'Python (Django)', 'RESTful APIs', 'GraphQL', 'Authentication (JWT/OAuth)'],
-    },
-    {
-      category: 'Database & Storage',
-      icon: FaDatabase,
-      skills: ['MongoDB (Mongoose)', 'PostgreSQL', 'MySQL', 'Redis Cache', 'Firebase Firestore', 'Prisma ORM'],
-    },
-    {
-      category: 'DevOps & Tooling',
-      icon: FaTools,
-      skills: ['Git & GitHub', 'Docker', 'Linux/Ubuntu CLI', 'Vercel / Netlify', 'AWS Basics', 'Postman API Testing'],
-    },
-  ];
+  const content = getSiteContent(siteInfo);
+  const categoryIcons = { FaReact, FaNodeJs, FaPhp, FaPython, FaDatabase, FaTools };
+  const skillCategories = siteInfo?.skillCategories?.length ? siteInfo.skillCategories : defaultSkillCategories;
 
   return (
     <>
       <Head>
-        <title>Technical Skills — Suraj Gupta</title>
-        <meta name="description" content="Technical proficiencies and skillset of Suraj Gupta - MERN, Laravel, Django, Next.js" />
+        <title>{content.skills.title} — {siteInfo?.name || 'Suraj Gupta'}</title>
+        <meta name="description" content={content.skills.metaDescription} />
       </Head>
 
       <Navbar />
@@ -49,19 +31,19 @@ export default function SkillsPage() {
           <div className="mx-auto max-w-7xl">
             <div className="text-center max-w-3xl mx-auto mb-16">
               <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/25 bg-blue-500/10 px-4 py-1.5 text-sm text-blue-300 mb-4">
-                Tech Stack &amp; Tools
+                {content.skills.eyebrow}
               </div>
               <h1 className="text-3xl font-bold text-slate-50 sm:text-4xl lg:text-5xl">
-                Technical <span className="text-gradient">Proficiencies</span>
+                {content.skills.title}
               </h1>
               <p className="mt-4 text-lg text-slate-300">
-                A structured overview of the frameworks, languages, databases, and development tooling I use to craft performant web software.
+                {content.skills.description}
               </p>
             </div>
 
             <div className="grid gap-8 md:grid-cols-2">
               {skillCategories.map((cat, idx) => {
-                const Icon = cat.icon;
+                const Icon = categoryIcons[cat.icon] || FaTools;
                 return (
                   <div
                     key={idx}
@@ -117,17 +99,17 @@ export default function SkillsPage() {
         <section className="py-16 px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-4xl text-center">
             <h2 className="text-2xl font-bold text-slate-50 sm:text-3xl">
-              Ready to work with a <span className="text-gradient">Versatile Engineer</span>?
+              {content.skills.ctaTitle}
             </h2>
             <p className="mt-4 text-lg text-slate-300">
-              Whether it&apos;s a MERN web application, Django automation backend, or Laravel business portal.
+              {content.skills.ctaDescription}
             </p>
             <div className="mt-8 flex justify-center gap-4">
               <Link
                 href="/projects"
                 className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 px-6 py-3 text-sm font-medium text-white shadow-lg transition hover:from-blue-500 hover:to-blue-400"
               >
-                Explore Projects
+                {content.skills.ctaButton}
               </Link>
             </div>
           </div>

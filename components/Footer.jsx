@@ -1,7 +1,22 @@
 import Link from 'next/link';
 import { FaGithub, FaLinkedin, FaTwitter, FaEnvelope, FaPhone, FaMapMarkerAlt, FaHeart, FaArrowUp } from 'react-icons/fa';
+import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
+import { getSiteContent } from '../lib/siteContent';
 
 export default function Footer() {
+  const { data: siteInfo } = useQuery(['siteInfo'], () => axios.get('/api/siteinfo').then((r) => r.data));
+  const content = getSiteContent(siteInfo);
+  const footer = content.footer;
+  const navigation = content.navigation;
+  const email = siteInfo?.contactEmail || 'surajgupta.dev@example.com';
+  const socialLinks = [
+    { href: siteInfo?.socialLinks?.github, icon: FaGithub, label: 'GitHub' },
+    { href: siteInfo?.socialLinks?.linkedin, icon: FaLinkedin, label: 'LinkedIn' },
+    { href: siteInfo?.socialLinks?.twitter, icon: FaTwitter, label: 'Twitter' },
+    { href: `mailto:${email}`, icon: FaEnvelope, label: 'Email' },
+  ].filter((social) => social.href);
+
   const scrollToTop = () => {
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -10,28 +25,12 @@ export default function Footer() {
 
   const navLinks = [
     { href: '/', label: 'Home' },
-    { href: '/about', label: 'About' },
-    { href: '/services', label: 'Services' },
-    { href: '/skills', label: 'Skills' },
-    { href: '/experience', label: 'Experience' },
-    { href: '/projects', label: 'Projects' },
-    { href: '/contact', label: 'Contact' },
-  ];
-
-  const services = [
-    'MERN Stack Apps',
-    'PHP & Laravel Systems',
-    'Python & Django APIs',
-    'Custom Database Modeling',
-    'Cloud Integrations',
-    'Performance Optimization',
-  ];
-
-  const socialLinks = [
-    { href: 'https://github.com/surajcodingclave', icon: FaGithub, label: 'GitHub' },
-    { href: 'https://linkedin.com/', icon: FaLinkedin, label: 'LinkedIn' },
-    { href: 'https://twitter.com/', icon: FaTwitter, label: 'Twitter' },
-    { href: 'mailto:surajgupta.dev@example.com', icon: FaEnvelope, label: 'Email' },
+    { href: '/about', label: navigation.aboutLabel },
+    { href: '/services', label: navigation.servicesLabel },
+    { href: '/skills', label: navigation.skillsLabel },
+    { href: '/experience', label: navigation.experienceLabel },
+    { href: '/projects', label: navigation.projectsLabel },
+    { href: '/contact', label: navigation.contactLabel },
   ];
 
   return (
@@ -44,10 +43,10 @@ export default function Footer() {
           {/* Col 1: Brand & Bio */}
           <div className="space-y-4">
             <Link href="/" className="font-display text-2xl font-bold text-slate-50 hover:text-blue-400 transition-colors inline-block">
-              Suraj<span className="text-blue-400">.</span>
+              {navigation.logoText}<span className="text-blue-400">.</span>
             </Link>
             <p className="text-sm leading-relaxed text-slate-400">
-              Full-Stack Software Engineer specializing in MERN Stack, PHP with Laravel, and Python with Django. Designing and shipping scalable modern web products.
+              {footer.bio}
             </p>
             <div className="pt-2 flex gap-3">
               {socialLinks.map((s) => (
@@ -67,7 +66,7 @@ export default function Footer() {
 
           {/* Col 2: Navigation Links */}
           <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-100 mb-4">Quick Navigation</h4>
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-100 mb-4">{footer.navigationTitle}</h4>
             <ul className="space-y-2.5 text-sm">
               {navLinks.map((link) => (
                 <li key={link.href}>
@@ -81,9 +80,9 @@ export default function Footer() {
 
           {/* Col 3: Services Offered */}
           <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-100 mb-4">Core Services</h4>
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-100 mb-4">{footer.servicesTitle}</h4>
             <ul className="space-y-2.5 text-sm text-slate-400">
-              {services.map((item, i) => (
+              {footer.services.map((item, i) => (
                 <li key={i} className="flex items-center gap-2">
                   <span className="h-1.5 w-1.5 rounded-full bg-blue-400/80"></span>
                   {item}
@@ -94,27 +93,27 @@ export default function Footer() {
 
           {/* Col 4: Contact & Office */}
           <div className="space-y-3">
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-100 mb-4">Get In Touch</h4>
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-100 mb-4">{footer.contactTitle}</h4>
             <div className="flex items-start gap-3 text-sm text-slate-400">
               <FaMapMarkerAlt className="h-4 w-4 text-blue-400 mt-1 flex-shrink-0" />
-              <span>Lucknow, Uttar Pradesh, India</span>
+              <span>{siteInfo?.location || 'India'}</span>
             </div>
             <div className="flex items-center gap-3 text-sm text-slate-400">
               <FaEnvelope className="h-4 w-4 text-blue-400 flex-shrink-0" />
-              <a href="mailto:surajgupta.dev@example.com" className="hover:text-blue-400 transition-colors">
-                surajgupta.dev@example.com
+              <a href={`mailto:${email}`} className="hover:text-blue-400 transition-colors">
+                {email}
               </a>
             </div>
             <div className="flex items-center gap-3 text-sm text-slate-400">
               <FaPhone className="h-4 w-4 text-blue-400 flex-shrink-0" />
-              <span>+91 98765 43210</span>
+              <span>{siteInfo?.phone || ''}</span>
             </div>
             <div className="pt-3">
               <Link
                 href="/contact"
                 className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 px-4 py-2 text-xs font-semibold text-white shadow-md hover:from-blue-500 hover:to-blue-400 transition"
               >
-                Start a Conversation &rarr;
+                {footer.ctaButton} &rarr;
               </Link>
             </div>
           </div>
@@ -123,7 +122,7 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="border-t border-slate-800/70 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
           <p className="flex items-center gap-1">
-            &copy; {new Date().getFullYear()} <span className="text-slate-300 font-medium">Suraj Gupta</span>. Handcrafted with <FaHeart className="text-rose-500 inline h-3 w-3" /> & Next.js.
+            &copy; {new Date().getFullYear()} <span className="text-slate-300 font-medium">{footer.copyrightName}</span>. Handcrafted with <FaHeart className="text-rose-500 inline h-3 w-3" /> & Next.js.
           </p>
 
           <div className="flex items-center gap-6">

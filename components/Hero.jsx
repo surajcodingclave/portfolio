@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-export default function Hero({ name, tagline }) {
+export default function Hero({ name, tagline, avatarUrl, content }) {
   return (
     <section className="relative flex min-h-[calc(100dvh-4rem)] flex-col justify-center px-4 pt-24 pb-16 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl w-full">
@@ -9,7 +9,7 @@ export default function Hero({ name, tagline }) {
           <div className="order-2 text-center lg:order-1 lg:text-left">
             <div className="animate-fade-in-up mb-6 inline-flex items-center gap-2 rounded-full border border-blue-500/25 bg-blue-500/10 px-4 py-1.5 text-sm text-blue-300">
               <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
-              Open to full-time roles
+              {content.eyebrow}
             </div>
 
             <h1 className="animate-fade-in-up text-3xl font-bold tracking-tight text-slate-50 sm:text-5xl lg:text-6xl" style={{ animationDelay: '0.1s' }}>
@@ -20,8 +20,7 @@ export default function Hero({ name, tagline }) {
             </h1>
 
             <p className="animate-fade-in-up mt-6 max-w-xl text-lg leading-relaxed text-slate-300 sm:text-xl" style={{ animationDelay: '0.2s' }}>
-              Full-stack engineer specializing in MERN Stack, PHP with Laravel,
-              Python with Django &mdash; building modern, scalable web applications.
+              {content.description}
             </p>
 
             <div className="animate-fade-in-up mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center lg:justify-start" style={{ animationDelay: '0.3s' }}>
@@ -29,20 +28,20 @@ export default function Hero({ name, tagline }) {
                 href="/projects"
                 className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 px-6 py-3 text-sm font-medium text-white shadow-lg shadow-blue-950/30 transition hover:from-blue-500 hover:to-blue-400 hover:shadow-xl"
               >
-                View My Work
+                {content.primaryAction}
               </Link>
               <Link
                 href="/contact"
                 className="inline-flex items-center justify-center rounded-lg border border-slate-700 px-6 py-3 text-sm font-medium text-slate-300 transition hover:border-slate-600 hover:bg-slate-800/50 hover:text-slate-50"
               >
-                Discuss a Project
+                {content.secondaryAction}
               </Link>
             </div>
 
             <p className="animate-fade-in-up mt-4 text-sm text-slate-500" style={{ animationDelay: '0.4s' }}>
-              Prefer browsing work first?{' '}
+              {content.browseNote}{' '}
               <Link href="/projects" className="text-blue-400 underline underline-offset-2 hover:text-blue-300">
-                View Projects
+                {content.browseLinkLabel}
               </Link>
             </p>
           </div>
@@ -53,7 +52,7 @@ export default function Hero({ name, tagline }) {
               <div className="absolute inset-0 rounded-full bg-blue-600/15 blur-3xl"></div>
               <div className="absolute -inset-4 rounded-full bg-gradient-to-br from-blue-500/10 to-cyan-500/10 blur-2xl"></div>
               <img
-                src="/images/profile.png"
+                src={avatarUrl || '/images/profile.png'}
                 alt={name || 'Suraj Gupta'}
                 className="relative h-48 w-48 rounded-full border-2 border-slate-700/50 object-cover shadow-2xl sm:h-56 sm:w-56 lg:h-72 lg:w-72"
                 onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Suraj+Gupta&size=300&background=1e40af&color=fff&font-size=0.35'; }}

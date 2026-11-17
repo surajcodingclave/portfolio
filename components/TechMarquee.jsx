@@ -1,10 +1,10 @@
+import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
+import { getSiteContent } from '../lib/siteContent';
+
 export default function TechMarquee() {
-  const techs = [
-    'Next.js', 'React', 'Node.js', 'MongoDB', 'Express.js',
-    'TypeScript', 'Tailwind CSS', 'PHP', 'Laravel', 'Python',
-    'Django', 'PostgreSQL', 'MySQL', 'Redis', 'Docker',
-    'Git', 'REST API', 'GraphQL', 'AWS', 'Firebase',
-  ];
+  const { data: siteInfo } = useQuery(['siteInfo'], () => axios.get('/api/siteinfo').then((r) => r.data));
+  const techs = getSiteContent(siteInfo).marqueeSkills;
 
   const doubled = [...techs, ...techs];
 

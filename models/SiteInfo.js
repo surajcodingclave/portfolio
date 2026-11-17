@@ -6,8 +6,12 @@ const SiteInfoSchema = new mongoose.Schema({
   bio: String,
   avatarUrl: String,
   contactEmail: String,
+  phone: String,
+  location: String,
+  socialLinks: { type: mongoose.Schema.Types.Mixed, default: {} },
+  siteContent: { type: mongoose.Schema.Types.Mixed, default: {} },
+  skillCategories: { type: [mongoose.Schema.Types.Mixed], default: [] },
   skills: [String],
-  // add any other fields you want editable via admin
 });
 
 export default mongoose.models.SiteInfo || mongoose.model('SiteInfo', SiteInfoSchema);

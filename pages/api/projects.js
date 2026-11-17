@@ -1,8 +1,15 @@
 import { connectToDatabase } from '../../lib/mongoose';
+import { requireAdmin } from '../../lib/requireAdmin';
 import Project from '../../models/Project';
 import { initialProjects } from '../../lib/dummyData';
 
 export default async function handler(req, res) {
+  if (!['GET', 'POST', 'PUT', 'DELETE'].includes(req.method)) {
+    res.setHeader('Allow', ['GET', 'POST', 'PUT', 'DELETE']);
+    return res.status(405).end(`Method ${req.method} Not Allowed`);
+  }
+  if (req.method !== 'GET' && !(await requireAdmin(req, res))) return;
+
   try {
     await connectToDatabase();
 
@@ -21,7 +28,8 @@ export default async function handler(req, res) {
 
     if (req.method === 'PUT') {
       const { _id, ...updates } = req.body;
-      const proj = await Project.findByIdAndUpdate(_id, updates, { new: true });
+      const proj = await Project.findByIdAndUpdate(_id, updates, { new: true, runValidators: true });
+      if (!proj) return res.status(404).json({ error: 'Project not found' });
       return res.status(200).json(proj);
     }
 
@@ -32,10 +40,7 @@ export default async function handler(req, res) {
     }
   } catch (err) {
     console.error('MongoDB error, using fallback projects:', err.message);
-    if (req.method === 'GET') {
-      return res.status(200).json(initialProjects);
-    }
+    if (req.method === 'GET') return res.status(200).json(initialProjects);
+    return res.status(500).json({ error: 'Unable to save project changes' });
   }
-
-  res.status(405).end();
 }

@@ -5,13 +5,14 @@ import axios from 'axios';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import Head from 'next/head';
-import { FaTrash, FaPlus, FaSave, FaImage, FaSignOutAlt, FaBriefcase, FaCode } from 'react-icons/fa';
+import { FaTrash, FaPlus, FaSave, FaSignOutAlt, FaBriefcase, FaCode, FaEdit, FaTimes } from 'react-icons/fa';
+import { defaultSiteContent, defaultSkillCategories, getSiteContent } from '../../lib/siteContent';
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
   const queryClient = useQueryClient();
 
-  const [activeTab, setActiveTab] = useState('profile'); // 'profile' | 'projects' | 'services' | 'experience'
+  const [activeTab, setActiveTab] = useState('profile');
 
   // Queries
   const { data: siteInfo } = useQuery(['siteInfo'], () => axios.get('/api/siteinfo').then((r) => r.data));
@@ -25,42 +26,82 @@ export default function Dashboard() {
       queryClient.invalidateQueries(['siteInfo']);
       alert('Profile updated successfully!');
     },
+    onError: (error) => alert(error.response?.data?.error || 'Unable to save website settings.'),
   });
 
   const addProject = useMutation((payload) => axios.post('/api/projects', payload).then((r) => r.data), {
     onSuccess: () => {
       queryClient.invalidateQueries(['projects']);
       setProjForm({ title: '', description: '', techStack: [], demoUrl: '', repoUrl: '', imageUrl: '' });
+      setEditingProject(null);
       alert('Project added successfully!');
     },
+    onError: (error) => alert(error.response?.data?.error || 'Unable to add project.'),
+  });
+
+  const updateProject = useMutation((payload) => axios.put('/api/projects', payload).then((r) => r.data), {
+    onSuccess: () => {
+      queryClient.invalidateQueries(['projects']);
+      setProjForm({ title: '', description: '', techStack: [], demoUrl: '', repoUrl: '', imageUrl: '' });
+      setEditingProject(null);
+      alert('Project updated successfully!');
+    },
+    onError: (error) => alert(error.response?.data?.error || 'Unable to update project.'),
   });
 
   const deleteProject = useMutation((id) => axios.delete(`/api/projects?id=${id}`), {
     onSuccess: () => queryClient.invalidateQueries(['projects']),
+    onError: (error) => alert(error.response?.data?.error || 'Unable to delete project.'),
   });
 
   const addService = useMutation((payload) => axios.post('/api/services', payload).then((r) => r.data), {
     onSuccess: () => {
       queryClient.invalidateQueries(['services']);
       setServiceForm({ title: '', description: '', icon: 'FaCode', featuresString: '' });
+      setEditingService(null);
       alert('Service added!');
     },
+    onError: (error) => alert(error.response?.data?.error || 'Unable to add service.'),
+  });
+
+  const updateService = useMutation((payload) => axios.put('/api/services', payload).then((r) => r.data), {
+    onSuccess: () => {
+      queryClient.invalidateQueries(['services']);
+      setServiceForm({ title: '', description: '', icon: 'FaCode', featuresString: '' });
+      setEditingService(null);
+      alert('Service updated!');
+    },
+    onError: (error) => alert(error.response?.data?.error || 'Unable to update service.'),
   });
 
   const deleteService = useMutation((id) => axios.delete(`/api/services?id=${id}`), {
     onSuccess: () => queryClient.invalidateQueries(['services']),
+    onError: (error) => alert(error.response?.data?.error || 'Unable to delete service.'),
   });
 
   const addExperience = useMutation((payload) => axios.post('/api/experience', payload).then((r) => r.data), {
     onSuccess: () => {
       queryClient.invalidateQueries(['experience']);
       setExpForm({ role: '', company: '', location: '', period: '', description: '', techString: '' });
+      setEditingExperience(null);
       alert('Experience added!');
     },
+    onError: (error) => alert(error.response?.data?.error || 'Unable to add experience.'),
+  });
+
+  const updateExperience = useMutation((payload) => axios.put('/api/experience', payload).then((r) => r.data), {
+    onSuccess: () => {
+      queryClient.invalidateQueries(['experience']);
+      setExpForm({ role: '', company: '', location: '', period: '', description: '', techString: '' });
+      setEditingExperience(null);
+      alert('Experience updated!');
+    },
+    onError: (error) => alert(error.response?.data?.error || 'Unable to update experience.'),
   });
 
   const deleteExperience = useMutation((id) => axios.delete(`/api/experience?id=${id}`), {
     onSuccess: () => queryClient.invalidateQueries(['experience']),
+    onError: (error) => alert(error.response?.data?.error || 'Unable to delete experience.'),
   });
 
   // Forms
@@ -73,9 +114,15 @@ export default function Dashboard() {
     phone: '',
     location: '',
     skills: [],
+    socialLinks: { github: '', linkedin: '', twitter: '' },
+    skillCategories: defaultSkillCategories,
+    siteContent: defaultSiteContent,
   });
 
   const [newSkillInput, setNewSkillInput] = useState('');
+  const [editingProject, setEditingProject] = useState(null);
+  const [editingService, setEditingService] = useState(null);
+  const [editingExperience, setEditingExperience] = useState(null);
   const [projForm, setProjForm] = useState({
     title: '',
     description: '',
@@ -115,6 +162,9 @@ export default function Dashboard() {
         phone: siteInfo.phone || '',
         location: siteInfo.location || '',
         skills: siteInfo.skills || [],
+        socialLinks: { github: '', linkedin: '', twitter: '', ...(siteInfo.socialLinks || {}) },
+        skillCategories: siteInfo.skillCategories?.length ? siteInfo.skillCategories : defaultSkillCategories,
+        siteContent: getSiteContent(siteInfo),
       });
     }
   }, [siteInfo]);
@@ -201,6 +251,209 @@ export default function Dashboard() {
     updateSiteInfo.mutate(siteForm);
   };
 
+  const updateSiteContentField = (section, field, value) => {
+    setSiteForm((current) => ({
+      ...current,
+      siteContent: {
+        ...current.siteContent,
+        [section]: { ...current.siteContent[section], [field]: value },
+      },
+    }));
+  };
+
+  const updateSocialLink = (name, value) => {
+    setSiteForm((current) => ({
+      ...current,
+      socialLinks: { ...current.socialLinks, [name]: value },
+    }));
+  };
+
+  const updateSkillCategory = (index, field, value) => {
+    setSiteForm((current) => ({
+      ...current,
+      skillCategories: current.skillCategories.map((category, categoryIndex) =>
+        categoryIndex === index ? { ...category, [field]: value } : category
+      ),
+    }));
+  };
+
+  const contentGroups = [
+    {
+      title: 'Navigation',
+      section: 'navigation',
+      fields: [
+        ['logoText', 'Logo text'],
+        ['homeLabel', 'Home link'],
+        ['aboutLabel', 'About link'],
+        ['servicesLabel', 'Services link'],
+        ['skillsLabel', 'Skills link'],
+        ['experienceLabel', 'Experience link'],
+        ['projectsLabel', 'Projects link'],
+        ['contactLabel', 'Contact link'],
+        ['hireMeLabel', 'Hire Me button'],
+      ],
+    },
+    {
+      title: 'Home page',
+      section: 'home',
+      fields: [
+        ['metaDescription', 'SEO description'],
+        ['eyebrow', 'Availability badge'],
+        ['description', 'Hero description', true],
+        ['primaryAction', 'Primary button'],
+        ['secondaryAction', 'Secondary button'],
+        ['browseNote', 'Browse note'],
+        ['browseLinkLabel', 'Browse link label'],
+        ['projectsTitle', 'Featured projects heading'],
+        ['projectsDescription', 'Featured projects description', true],
+        ['projectsEmpty', 'Empty projects message', true],
+        ['ctaTitle', 'Bottom call-to-action heading'],
+        ['ctaDescription', 'Bottom call-to-action description', true],
+        ['ctaPrimary', 'Bottom primary button'],
+        ['ctaSecondary', 'Bottom secondary button'],
+        ['viewAllProjectsLabel', 'View all projects link'],
+      ],
+    },
+    {
+      title: 'About page',
+      section: 'about',
+      fields: [
+        ['metaDescription', 'SEO description'],
+        ['title', 'Page heading'],
+        ['whoTitle', 'First section heading'],
+        ['whoDescription', 'First section text', true],
+        ['whatTitle', 'Second section heading'],
+        ['whatDescription', 'Second section text', true],
+        ['howTitle', 'Third section heading'],
+        ['howDescription', 'Third section text', true],
+        ['skillsTitle', 'Skills heading'],
+        ['ctaTitle', 'Bottom call-to-action heading'],
+        ['ctaDescription', 'Bottom call-to-action description', true],
+        ['ctaPrimary', 'Primary button'],
+        ['ctaSecondary', 'Secondary button'],
+      ],
+    },
+    {
+      title: 'Projects page',
+      section: 'projects',
+      fields: [
+        ['metaDescription', 'SEO description'],
+        ['title', 'Page heading'],
+        ['description', 'Page introduction', true],
+        ['emptyTitle', 'Empty state heading'],
+        ['emptyDescription', 'Empty state description', true],
+        ['ctaTitle', 'Call-to-action heading'],
+        ['ctaDescription', 'Call-to-action description', true],
+        ['ctaButton', 'Call-to-action button'],
+        ['demoLinkLabel', 'Project demo link'],
+        ['sourceLinkLabel', 'Project source link'],
+        ['detailsLabel', 'Project details label'],
+      ],
+    },
+    {
+      title: 'Services page',
+      section: 'services',
+      fields: [
+        ['metaDescription', 'SEO description'],
+        ['eyebrow', 'Eyebrow'],
+        ['title', 'Page heading'],
+        ['description', 'Page introduction', true],
+        ['ctaTitle', 'Call-to-action heading'],
+        ['ctaDescription', 'Call-to-action description', true],
+        ['ctaButton', 'Call-to-action button'],
+      ],
+    },
+    {
+      title: 'Skills page',
+      section: 'skills',
+      fields: [
+        ['metaDescription', 'SEO description'],
+        ['eyebrow', 'Eyebrow'],
+        ['title', 'Page heading'],
+        ['description', 'Page introduction', true],
+        ['ctaTitle', 'Call-to-action heading'],
+        ['ctaDescription', 'Call-to-action description', true],
+        ['ctaButton', 'Call-to-action button'],
+      ],
+    },
+    {
+      title: 'Experience page & education',
+      section: 'experience',
+      fields: [
+        ['metaDescription', 'SEO description'],
+        ['eyebrow', 'Eyebrow'],
+        ['title', 'Page heading'],
+        ['description', 'Page introduction', true],
+        ['educationTitle', 'Education heading'],
+        ['educationDegree', 'Degree'],
+        ['educationField', 'Field of study'],
+        ['educationResult', 'Result'],
+        ['educationDescription', 'Education description', true],
+        ['ctaTitle', 'Call-to-action heading'],
+        ['ctaDescription', 'Call-to-action description', true],
+        ['ctaButton', 'Call-to-action button'],
+      ],
+    },
+    {
+      title: 'Contact page',
+      section: 'contact',
+      fields: [
+        ['metaDescription', 'SEO description'],
+        ['title', 'Page heading'],
+        ['description', 'Page introduction', true],
+        ['formTitle', 'Contact form heading'],
+        ['contactInfoTitle', 'Contact details heading'],
+        ['emailInfoLabel', 'Email information label'],
+        ['phoneInfoLabel', 'Phone information label'],
+        ['locationInfoLabel', 'Location information label'],
+        ['nameLabel', 'Name field label'],
+        ['emailLabel', 'Email field label'],
+        ['subjectLabel', 'Subject field label'],
+        ['messageLabel', 'Message field label'],
+        ['sendButton', 'Submit button'],
+        ['sentButton', 'Submitted button text'],
+        ['socialTitle', 'Social links heading'],
+      ],
+    },
+    {
+      title: 'Footer',
+      section: 'footer',
+      fields: [
+        ['bio', 'Footer biography', true],
+        ['navigationTitle', 'Navigation heading'],
+        ['servicesTitle', 'Services heading'],
+        ['contactTitle', 'Contact heading'],
+        ['ctaButton', 'Contact button'],
+        ['copyrightName', 'Copyright name'],
+      ],
+    },
+  ];
+
+  const renderContentField = (section, [field, label, multiline]) => {
+    const value = siteForm.siteContent[section]?.[field] || '';
+    const fieldClass =
+      'w-full rounded-lg border border-slate-700 bg-slate-800/50 px-4 py-2.5 text-sm text-slate-100 outline-none focus:border-blue-500';
+    return (
+      <label key={`${section}-${field}`} className="block text-xs font-medium text-slate-400">
+        <span className="mb-1 block">{label}</span>
+        {multiline ? (
+          <textarea
+            rows={3}
+            className={fieldClass}
+            value={value}
+            onChange={(e) => updateSiteContentField(section, field, e.target.value)}
+          />
+        ) : (
+          <input
+            className={fieldClass}
+            value={value}
+            onChange={(e) => updateSiteContentField(section, field, e.target.value)}
+          />
+        )}
+      </label>
+    );
+  };
+
   return (
     <>
       <Head>
@@ -230,6 +483,7 @@ export default function Dashboard() {
           <div className="flex flex-wrap gap-2 border-b border-slate-800 pb-4 mb-8">
             {[
               { id: 'profile', label: '👤 Profile & Photo' },
+              { id: 'content', label: '📝 Website Content' },
               { id: 'skills', label: '⚡ Skills Management' },
               { id: 'projects', label: '🚀 Projects Manager' },
               { id: 'services', label: '🛠️ Services' },
@@ -342,6 +596,24 @@ export default function Dashboard() {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {[
+                    ['github', 'GitHub URL'],
+                    ['linkedin', 'LinkedIn URL'],
+                    ['twitter', 'Twitter URL'],
+                  ].map(([key, label]) => (
+                    <label key={key} className="block text-xs font-medium uppercase tracking-wider text-slate-400">
+                      <span className="mb-1 block">{label}</span>
+                      <input
+                        type="url"
+                        className="w-full rounded-lg border border-slate-700 bg-slate-800/50 px-4 py-2.5 text-sm text-slate-100 outline-none focus:border-blue-500"
+                        value={siteForm.socialLinks[key]}
+                        onChange={(e) => updateSocialLink(key, e.target.value)}
+                      />
+                    </label>
+                  ))}
+                </div>
+
                 <button
                   type="submit"
                   disabled={updateSiteInfo.isLoading}
@@ -353,11 +625,75 @@ export default function Dashboard() {
             </div>
           )}
 
+          {/* Website content editor */}
+          {activeTab === 'content' && (
+            <form onSubmit={handleSaveProfile} className="space-y-6">
+              {contentGroups.map((group) => (
+                <section key={group.section} className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 sm:p-8">
+                  <h2 className="mb-5 text-xl font-bold text-slate-50">{group.title}</h2>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {group.fields.map((field) => renderContentField(group.section, field))}
+                  </div>
+                  {group.section === 'footer' && (
+                    <label className="mt-4 block text-xs font-medium text-slate-400">
+                      <span className="mb-1 block">Footer service list (comma separated)</span>
+                      <textarea
+                        rows={2}
+                        className="w-full rounded-lg border border-slate-700 bg-slate-800/50 px-4 py-2.5 text-sm text-slate-100 outline-none focus:border-blue-500"
+                        value={siteForm.siteContent.footer.services.join(', ')}
+                        onChange={(e) =>
+                          updateSiteContentField(
+                            'footer',
+                            'services',
+                            e.target.value.split(',').map((item) => item.trim()).filter(Boolean)
+                          )
+                        }
+                      />
+                    </label>
+                  )}
+                  {group.section === 'navigation' && (
+                    <p className="mt-4 text-xs text-slate-500">
+                      Navigation labels can be changed here; page destinations are fixed to the existing site pages.
+                    </p>
+                  )}
+                </section>
+              ))}
+
+              <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 sm:p-8">
+                <h2 className="mb-2 text-xl font-bold text-slate-50">Technology marquee</h2>
+                <p className="mb-4 text-sm text-slate-400">Edit the scrolling technology names shown on the home and skills pages.</p>
+                <textarea
+                  rows={3}
+                  className="w-full rounded-lg border border-slate-700 bg-slate-800/50 px-4 py-2.5 text-sm text-slate-100 outline-none focus:border-blue-500"
+                  value={siteForm.siteContent.marqueeSkills.join(', ')}
+                  onChange={(e) =>
+                    setSiteForm((current) => ({
+                      ...current,
+                      siteContent: {
+                        ...current.siteContent,
+                        marqueeSkills: e.target.value.split(',').map((item) => item.trim()).filter(Boolean),
+                      },
+                    }))
+                  }
+                />
+              </section>
+
+              <button
+                type="submit"
+                disabled={updateSiteInfo.isLoading}
+                className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 px-8 py-3 text-sm font-semibold text-white shadow-lg transition hover:from-blue-500"
+              >
+                <FaSave /> Save Website Content
+              </button>
+            </form>
+          )}
+
           {/* TAB 2: Skills Management */}
           {activeTab === 'skills' && (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 sm:p-8 max-w-4xl">
-              <h2 className="text-xl font-bold text-slate-50 mb-2">Technical Skills Manager</h2>
-              <p className="text-sm text-slate-400 mb-6">Add or delete individual skills in real-time. Changes are saved with one click.</p>
+            <div className="space-y-6">
+              <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 sm:p-8 max-w-4xl">
+              <h2 className="text-xl font-bold text-slate-50 mb-2">Portfolio Skills</h2>
+              <p className="text-sm text-slate-400 mb-6">Manage the profile skills displayed on the About page and in the skills database list.</p>
 
               {/* Add Skill Form */}
               <form onSubmit={handleAddSkill} className="flex gap-3 mb-8">
@@ -412,6 +748,88 @@ export default function Dashboard() {
               >
                 <FaSave /> Save Skills to Database
               </button>
+              </div>
+
+              <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 sm:p-8">
+                <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-50">Skills page categories</h2>
+                    <p className="mt-1 text-sm text-slate-400">Edit the grouped skills shown on the Skills page.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSiteForm((current) => ({
+                        ...current,
+                        skillCategories: [...current.skillCategories, { category: '', icon: 'FaTools', skills: [] }],
+                      }))
+                    }
+                    className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500"
+                  >
+                    <FaPlus /> Add Category
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  {siteForm.skillCategories.map((category, index) => (
+                    <div key={`${category.category}-${index}`} className="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
+                      <div className="grid gap-3 md:grid-cols-[1fr_220px_auto]">
+                        <input
+                          aria-label="Skill category title"
+                          className="rounded-lg border border-slate-700 bg-slate-800/50 px-3 py-2 text-sm text-slate-100"
+                          value={category.category}
+                          onChange={(e) => updateSkillCategory(index, 'category', e.target.value)}
+                          placeholder="Category title"
+                        />
+                        <select
+                          aria-label="Skill category icon"
+                          className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
+                          value={category.icon}
+                          onChange={(e) => updateSkillCategory(index, 'icon', e.target.value)}
+                        >
+                          {['FaReact', 'FaNodeJs', 'FaPhp', 'FaPython', 'FaDatabase', 'FaTools'].map((icon) => (
+                            <option key={icon} value={icon}>{icon}</option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSiteForm((current) => ({
+                              ...current,
+                              skillCategories: current.skillCategories.filter((_, categoryIndex) => categoryIndex !== index),
+                            }))
+                          }
+                          className="rounded-lg border border-rose-900/60 px-3 py-2 text-rose-300 hover:bg-rose-950/40"
+                          aria-label="Delete category"
+                        >
+                          <FaTrash />
+                        </button>
+                      </div>
+                      <textarea
+                        aria-label="Category skills"
+                        rows={2}
+                        className="mt-3 w-full rounded-lg border border-slate-700 bg-slate-800/50 px-3 py-2 text-sm text-slate-100"
+                        value={category.skills.join(', ')}
+                        onChange={(e) =>
+                          updateSkillCategory(
+                            index,
+                            'skills',
+                            e.target.value.split(',').map((skill) => skill.trim()).filter(Boolean)
+                          )
+                        }
+                        placeholder="Comma-separated skills"
+                      />
+                    </div>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSaveProfile}
+                  disabled={updateSiteInfo.isLoading}
+                  className="mt-6 flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 px-6 py-3 text-sm font-semibold text-white shadow-lg hover:from-blue-500"
+                >
+                  <FaSave /> Save All Skills
+                </button>
+              </div>
             </div>
           )}
 
@@ -420,11 +838,12 @@ export default function Dashboard() {
             <div className="space-y-12">
               {/* Add Project Form */}
               <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 sm:p-8 max-w-4xl">
-                <h2 className="text-xl font-bold text-slate-50 mb-6">Create New Project</h2>
+                <h2 className="text-xl font-bold text-slate-50 mb-6">{editingProject ? 'Edit Project' : 'Create New Project'}</h2>
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
-                    addProject.mutate(projForm);
+                    if (editingProject) updateProject.mutate({ _id: editingProject, ...projForm });
+                    else addProject.mutate(projForm);
                   }}
                   className="space-y-4"
                 >
@@ -505,11 +924,23 @@ export default function Dashboard() {
 
                   <button
                     type="submit"
-                    disabled={addProject.isLoading}
+                    disabled={addProject.isLoading || updateProject.isLoading}
                     className="flex items-center justify-center gap-2 w-full rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 py-3 text-sm font-semibold text-white shadow-lg transition hover:from-blue-500"
                   >
-                    <FaPlus /> Add Project
+                    {editingProject ? <FaSave /> : <FaPlus />} {editingProject ? 'Save Project' : 'Add Project'}
                   </button>
+                  {editingProject && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingProject(null);
+                        setProjForm({ title: '', description: '', techStack: [], demoUrl: '', repoUrl: '', imageUrl: '' });
+                      }}
+                      className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-700 py-2.5 text-sm text-slate-300 hover:bg-slate-800"
+                    >
+                      <FaTimes /> Cancel edit
+                    </button>
+                  )}
                 </form>
               </div>
 
@@ -539,16 +970,34 @@ export default function Dashboard() {
 
                         <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between">
                           <span className="text-[10px] text-slate-500">ID: {p._id.slice(-6)}</span>
-                          <button
-                            onClick={() => {
-                              if (confirm(`Delete project "${p.title}"?`)) {
-                                deleteProject.mutate(p._id);
-                              }
-                            }}
-                            className="flex items-center gap-1 rounded bg-rose-950/50 border border-rose-900/60 px-2.5 py-1 text-xs text-rose-300 hover:bg-rose-900 transition"
-                          >
-                            <FaTrash className="h-3 w-3" /> Delete
-                          </button>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                setEditingProject(p._id);
+                                setProjForm({
+                                  title: p.title || '',
+                                  description: p.description || '',
+                                  techStack: p.techStack || [],
+                                  demoUrl: p.demoUrl || '',
+                                  repoUrl: p.repoUrl || '',
+                                  imageUrl: p.imageUrl || '',
+                                });
+                              }}
+                              className="flex items-center gap-1 rounded border border-blue-900/60 px-2.5 py-1 text-xs text-blue-300 hover:bg-blue-950/40"
+                            >
+                              <FaEdit /> Edit
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm(`Delete project "${p.title}"?`)) {
+                                  deleteProject.mutate(p._id);
+                                }
+                              }}
+                              className="flex items-center gap-1 rounded bg-rose-950/50 border border-rose-900/60 px-2.5 py-1 text-xs text-rose-300 hover:bg-rose-900 transition"
+                            >
+                              <FaTrash className="h-3 w-3" /> Delete
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -562,16 +1011,18 @@ export default function Dashboard() {
           {activeTab === 'services' && (
             <div className="space-y-12">
               <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 sm:p-8 max-w-4xl">
-                <h2 className="text-xl font-bold text-slate-50 mb-6">Add New Service</h2>
+                <h2 className="text-xl font-bold text-slate-50 mb-6">{editingService ? 'Edit Service' : 'Add New Service'}</h2>
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
-                    addService.mutate({
+                    const payload = {
                       title: serviceForm.title,
                       description: serviceForm.description,
                       icon: serviceForm.icon,
                       features: serviceForm.featuresString.split(',').map((s) => s.trim()).filter(Boolean),
-                    });
+                    };
+                    if (editingService) updateService.mutate({ _id: editingService, ...payload });
+                    else addService.mutate(payload);
                   }}
                   className="space-y-4"
                 >
@@ -623,10 +1074,23 @@ export default function Dashboard() {
 
                   <button
                     type="submit"
-                    className="flex items-center justify-center gap-2 w-full rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white shadow-lg hover:bg-blue-500 transition"
+                    disabled={addService.isLoading || updateService.isLoading}
+                    className="flex items-center justify-center gap-2 w-full rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white shadow-lg hover:bg-blue-500 transition disabled:opacity-50"
                   >
-                    <FaPlus /> Add Service
+                    {editingService ? <FaSave /> : <FaPlus />} {editingService ? 'Save Service' : 'Add Service'}
                   </button>
+                  {editingService && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingService(null);
+                        setServiceForm({ title: '', description: '', icon: 'FaCode', featuresString: '' });
+                      }}
+                      className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-700 py-2.5 text-sm text-slate-300 hover:bg-slate-800"
+                    >
+                      <FaTimes /> Cancel edit
+                    </button>
+                  )}
                 </form>
               </div>
 
@@ -640,14 +1104,32 @@ export default function Dashboard() {
                         <h4 className="font-semibold text-slate-100">{s.title}</h4>
                         <p className="text-xs text-slate-400 mt-1 line-clamp-2">{s.description}</p>
                       </div>
-                      <button
-                        onClick={() => {
-                          if (confirm(`Delete service "${s.title}"?`)) deleteService.mutate(s._id);
-                        }}
-                        className="text-xs text-rose-400 hover:text-rose-300 p-2"
-                      >
-                        <FaTrash />
-                      </button>
+                      <div className="ml-3 flex shrink-0 gap-2">
+                        <button
+                          onClick={() => {
+                            setEditingService(s._id);
+                            setServiceForm({
+                              title: s.title || '',
+                              description: s.description || '',
+                              icon: s.icon || 'FaCode',
+                              featuresString: (s.features || []).join(', '),
+                            });
+                          }}
+                          className="rounded-lg border border-blue-900/60 p-2 text-blue-300 hover:bg-blue-950/40"
+                          aria-label={`Edit ${s.title}`}
+                        >
+                          <FaEdit />
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm(`Delete service "${s.title}"?`)) deleteService.mutate(s._id);
+                          }}
+                          className="rounded-lg border border-rose-900/60 p-2 text-rose-300 hover:bg-rose-950/40"
+                          aria-label={`Delete ${s.title}`}
+                        >
+                          <FaTrash />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -659,18 +1141,20 @@ export default function Dashboard() {
           {activeTab === 'experience' && (
             <div className="space-y-12">
               <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 sm:p-8 max-w-4xl">
-                <h2 className="text-xl font-bold text-slate-50 mb-6">Add Experience Entry</h2>
+                <h2 className="text-xl font-bold text-slate-50 mb-6">{editingExperience ? 'Edit Experience' : 'Add Experience Entry'}</h2>
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
-                    addExperience.mutate({
+                    const payload = {
                       role: expForm.role,
                       company: expForm.company,
                       location: expForm.location,
                       period: expForm.period,
                       description: expForm.description,
                       technologies: expForm.techString.split(',').map((s) => s.trim()).filter(Boolean),
-                    });
+                    };
+                    if (editingExperience) updateExperience.mutate({ _id: editingExperience, ...payload });
+                    else addExperience.mutate(payload);
                   }}
                   className="space-y-4"
                 >
@@ -739,10 +1223,23 @@ export default function Dashboard() {
 
                   <button
                     type="submit"
-                    className="flex items-center justify-center gap-2 w-full rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white shadow-lg hover:bg-blue-500 transition"
+                    disabled={addExperience.isLoading || updateExperience.isLoading}
+                    className="flex items-center justify-center gap-2 w-full rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white shadow-lg hover:bg-blue-500 transition disabled:opacity-50"
                   >
-                    <FaPlus /> Add Career Milestone
+                    {editingExperience ? <FaSave /> : <FaPlus />} {editingExperience ? 'Save Experience' : 'Add Career Milestone'}
                   </button>
+                  {editingExperience && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingExperience(null);
+                        setExpForm({ role: '', company: '', location: '', period: '', description: '', techString: '' });
+                      }}
+                      className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-700 py-2.5 text-sm text-slate-300 hover:bg-slate-800"
+                    >
+                      <FaTimes /> Cancel edit
+                    </button>
+                  )}
                 </form>
               </div>
 
@@ -756,14 +1253,34 @@ export default function Dashboard() {
                         <h4 className="font-semibold text-slate-100">{exp.role} <span className="text-blue-400 font-normal">at {exp.company}</span></h4>
                         <p className="text-xs text-slate-400">{exp.period} • {exp.location}</p>
                       </div>
-                      <button
-                        onClick={() => {
-                          if (confirm(`Delete experience at "${exp.company}"?`)) deleteExperience.mutate(exp._id);
-                        }}
-                        className="text-xs text-rose-400 hover:text-rose-300 p-2"
-                      >
-                        <FaTrash />
-                      </button>
+                      <div className="ml-3 flex shrink-0 gap-2">
+                        <button
+                          onClick={() => {
+                            setEditingExperience(exp._id);
+                            setExpForm({
+                              role: exp.role || '',
+                              company: exp.company || '',
+                              location: exp.location || '',
+                              period: exp.period || '',
+                              description: exp.description || '',
+                              techString: (exp.technologies || []).join(', '),
+                            });
+                          }}
+                          className="rounded-lg border border-blue-900/60 p-2 text-blue-300 hover:bg-blue-950/40"
+                          aria-label={`Edit experience at ${exp.company}`}
+                        >
+                          <FaEdit />
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm(`Delete experience at "${exp.company}"?`)) deleteExperience.mutate(exp._id);
+                          }}
+                          className="rounded-lg border border-rose-900/60 p-2 text-rose-300 hover:bg-rose-950/40"
+                          aria-label={`Delete experience at ${exp.company}`}
+                        >
+                          <FaTrash />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
