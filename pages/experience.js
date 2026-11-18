@@ -1,25 +1,17 @@
-import Head from 'next/head';
+import PageSEO from '../components/PageSEO';
+import { publicPageProps } from '../lib/publicData';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Link from 'next/link';
-import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
 import { FaBriefcase, FaGraduationCap, FaCalendarAlt, FaMapMarkerAlt } from 'react-icons/fa';
 import { getSiteContent } from '../lib/siteContent';
 
-export default function ExperiencePage() {
-  const { data: experiences, isLoading } = useQuery(['experience'], () =>
-    axios.get('/api/experience').then((r) => r.data)
-  );
-  const { data: siteInfo } = useQuery(['siteInfo'], () => axios.get('/api/siteinfo').then((r) => r.data));
+export default function ExperiencePage({ origin, siteInfo, experience: experiences }) {
   const content = getSiteContent(siteInfo);
 
   return (
     <>
-      <Head>
-        <title>{content.experience.title} — {siteInfo?.name || 'Suraj Gupta'}</title>
-        <meta name="description" content={content.experience.metaDescription} />
-      </Head>
+      <PageSEO page="experience" origin={origin} />
 
       <Navbar />
 
@@ -38,11 +30,7 @@ export default function ExperiencePage() {
               </p>
             </div>
 
-            {isLoading ? (
-              <div className="flex justify-center py-20">
-                <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
-              </div>
-            ) : (
+            {experiences.length ? (
               <div className="relative border-l border-slate-800 ml-4 md:ml-8 pl-6 md:pl-8 space-y-12">
                 {experiences?.map((exp) => (
                   <div key={exp._id} className="relative group">
@@ -91,10 +79,10 @@ export default function ExperiencePage() {
                   </div>
                 ))}
               </div>
-            )}
+            ) : <p className="text-center text-slate-400">{content.experience.emptyMessage}</p>}
 
             {/* Education Milestone */}
-            <div className="mt-20 border-t border-slate-800/80 pt-16">
+            {(content.experience.educationDegree || content.experience.educationField) && <div className="mt-20 border-t border-slate-800/80 pt-16">
               <h2 className="text-2xl font-bold text-slate-50 mb-8 flex items-center gap-3">
                 <FaGraduationCap className="text-blue-400" /> {content.experience.educationTitle}
               </h2>
@@ -110,7 +98,7 @@ export default function ExperiencePage() {
                   {content.experience.educationDescription}
                 </p>
               </div>
-            </div>
+            </div>}
           </div>
         </section>
 
@@ -138,4 +126,8 @@ export default function ExperiencePage() {
       <Footer />
     </>
   );
+}
+
+export function getStaticProps() {
+  return publicPageProps('experience', 'experience');
 }

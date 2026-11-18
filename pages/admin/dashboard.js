@@ -2,8 +2,8 @@ import { useSession, signIn, signOut } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
-import Navbar from '../../components/Navbar';
-import Footer from '../../components/Footer';
+import Link from 'next/link';
+import SiteSettings from '../../components/admin/SiteSettings';
 import Head from 'next/head';
 import { FaTrash, FaPlus, FaSave, FaSignOutAlt, FaBriefcase, FaCode, FaEdit, FaTimes } from 'react-icons/fa';
 import { defaultSiteContent, defaultSkillCategories, getSiteContent } from '../../lib/siteContent';
@@ -13,45 +13,46 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState('profile');
+  const [notice, setNotice] = useState(null);
 
   // Queries
-  const { data: siteInfo } = useQuery(['siteInfo'], () => axios.get('/api/siteinfo').then((r) => r.data));
-  const { data: projects } = useQuery(['projects'], () => axios.get('/api/projects').then((r) => r.data));
-  const { data: services } = useQuery(['services'], () => axios.get('/api/services').then((r) => r.data));
-  const { data: experiences } = useQuery(['experience'], () => axios.get('/api/experience').then((r) => r.data));
+  const { data: siteInfo, isError: siteInfoError, refetch: reloadsiteInfo } = useQuery(['siteInfo'], () => axios.get('/api/siteinfo?editor=1').then((r) => r.data), { enabled: !!session, refetchOnWindowFocus: false, staleTime: Infinity });
+  const { data: projects, isError: projectsError, refetch: reloadprojects } = useQuery(['projects'], () => axios.get('/api/projects?editor=1').then((r) => r.data), { enabled: !!session && activeTab === 'projects' });
+  const { data: services, isError: servicesError, refetch: reloadservices } = useQuery(['services'], () => axios.get('/api/services?editor=1').then((r) => r.data), { enabled: !!session && activeTab === 'services' });
+  const { data: experiences, isError: experiencesError, refetch: reloadexperiences } = useQuery(['experience'], () => axios.get('/api/experience?editor=1').then((r) => r.data), { enabled: !!session && activeTab === 'experience' });
 
   // Mutations
   const updateSiteInfo = useMutation((payload) => axios.put('/api/siteinfo', payload).then((r) => r.data), {
-    onSuccess: () => {
-      queryClient.invalidateQueries(['siteInfo']);
-      alert('Profile updated successfully!');
+    onSuccess: (data) => {
+      queryClient.setQueryData(['siteInfo'], data);
+      setNotice({ text: 'Website settings published.' });
     },
-    onError: (error) => alert(error.response?.data?.error || 'Unable to save website settings.'),
+    onError: (error) => setNotice({ error: true, text: error.response?.data?.error || 'Unable to save website settings.' }),
   });
 
   const addProject = useMutation((payload) => axios.post('/api/projects', payload).then((r) => r.data), {
     onSuccess: () => {
       queryClient.invalidateQueries(['projects']);
-      setProjForm({ title: '', description: '', techStack: [], demoUrl: '', repoUrl: '', imageUrl: '' });
+      setProjForm({ title: '', description: '', techStack: [], demoUrl: '', repoUrl: '', imageUrl: '', imageAlt: '' });
       setEditingProject(null);
-      alert('Project added successfully!');
+      setNotice({ text: 'Project added.' });
     },
-    onError: (error) => alert(error.response?.data?.error || 'Unable to add project.'),
+    onError: (error) => setNotice({ error: true, text: error.response?.data?.error || 'Unable to add project.' }),
   });
 
   const updateProject = useMutation((payload) => axios.put('/api/projects', payload).then((r) => r.data), {
     onSuccess: () => {
       queryClient.invalidateQueries(['projects']);
-      setProjForm({ title: '', description: '', techStack: [], demoUrl: '', repoUrl: '', imageUrl: '' });
+      setProjForm({ title: '', description: '', techStack: [], demoUrl: '', repoUrl: '', imageUrl: '', imageAlt: '' });
       setEditingProject(null);
-      alert('Project updated successfully!');
+      setNotice({ text: 'Project updated.' });
     },
-    onError: (error) => alert(error.response?.data?.error || 'Unable to update project.'),
+    onError: (error) => setNotice({ error: true, text: error.response?.data?.error || 'Unable to update project.' }),
   });
 
   const deleteProject = useMutation((id) => axios.delete(`/api/projects?id=${id}`), {
-    onSuccess: () => queryClient.invalidateQueries(['projects']),
-    onError: (error) => alert(error.response?.data?.error || 'Unable to delete project.'),
+    onSuccess: () => { queryClient.invalidateQueries(['projects']); setNotice({ text: 'Project deleted.' }); },
+    onError: (error) => setNotice({ error: true, text: error.response?.data?.error || 'Unable to delete project.' }),
   });
 
   const addService = useMutation((payload) => axios.post('/api/services', payload).then((r) => r.data), {
@@ -59,9 +60,9 @@ export default function Dashboard() {
       queryClient.invalidateQueries(['services']);
       setServiceForm({ title: '', description: '', icon: 'FaCode', featuresString: '' });
       setEditingService(null);
-      alert('Service added!');
+      setNotice({ text: 'Service added!' });
     },
-    onError: (error) => alert(error.response?.data?.error || 'Unable to add service.'),
+    onError: (error) => setNotice({ error: true, text: error.response?.data?.error || 'Unable to add service.' }),
   });
 
   const updateService = useMutation((payload) => axios.put('/api/services', payload).then((r) => r.data), {
@@ -69,14 +70,14 @@ export default function Dashboard() {
       queryClient.invalidateQueries(['services']);
       setServiceForm({ title: '', description: '', icon: 'FaCode', featuresString: '' });
       setEditingService(null);
-      alert('Service updated!');
+      setNotice({ text: 'Service updated!' });
     },
-    onError: (error) => alert(error.response?.data?.error || 'Unable to update service.'),
+    onError: (error) => setNotice({ error: true, text: error.response?.data?.error || 'Unable to update service.' }),
   });
 
   const deleteService = useMutation((id) => axios.delete(`/api/services?id=${id}`), {
-    onSuccess: () => queryClient.invalidateQueries(['services']),
-    onError: (error) => alert(error.response?.data?.error || 'Unable to delete service.'),
+    onSuccess: () => { queryClient.invalidateQueries(['services']); setNotice({ text: 'Service deleted.' }); },
+    onError: (error) => setNotice({ error: true, text: error.response?.data?.error || 'Unable to delete service.' }),
   });
 
   const addExperience = useMutation((payload) => axios.post('/api/experience', payload).then((r) => r.data), {
@@ -84,9 +85,9 @@ export default function Dashboard() {
       queryClient.invalidateQueries(['experience']);
       setExpForm({ role: '', company: '', location: '', period: '', description: '', techString: '' });
       setEditingExperience(null);
-      alert('Experience added!');
+      setNotice({ text: 'Experience added!' });
     },
-    onError: (error) => alert(error.response?.data?.error || 'Unable to add experience.'),
+    onError: (error) => setNotice({ error: true, text: error.response?.data?.error || 'Unable to add experience.' }),
   });
 
   const updateExperience = useMutation((payload) => axios.put('/api/experience', payload).then((r) => r.data), {
@@ -94,14 +95,14 @@ export default function Dashboard() {
       queryClient.invalidateQueries(['experience']);
       setExpForm({ role: '', company: '', location: '', period: '', description: '', techString: '' });
       setEditingExperience(null);
-      alert('Experience updated!');
+      setNotice({ text: 'Experience updated!' });
     },
-    onError: (error) => alert(error.response?.data?.error || 'Unable to update experience.'),
+    onError: (error) => setNotice({ error: true, text: error.response?.data?.error || 'Unable to update experience.' }),
   });
 
   const deleteExperience = useMutation((id) => axios.delete(`/api/experience?id=${id}`), {
-    onSuccess: () => queryClient.invalidateQueries(['experience']),
-    onError: (error) => alert(error.response?.data?.error || 'Unable to delete experience.'),
+    onSuccess: () => { queryClient.invalidateQueries(['experience']); setNotice({ text: 'Experience deleted.' }); },
+    onError: (error) => setNotice({ error: true, text: error.response?.data?.error || 'Unable to delete experience.' }),
   });
 
   // Forms
@@ -163,7 +164,8 @@ export default function Dashboard() {
         location: siteInfo.location || '',
         skills: siteInfo.skills || [],
         socialLinks: { github: '', linkedin: '', twitter: '', ...(siteInfo.socialLinks || {}) },
-        skillCategories: siteInfo.skillCategories?.length ? siteInfo.skillCategories : defaultSkillCategories,
+        skillCategories: siteInfo.siteContent?.skills?.customCategories || siteInfo.skillCategories?.length
+          ? siteInfo.skillCategories || [] : defaultSkillCategories,
         siteContent: getSiteContent(siteInfo),
       });
     }
@@ -205,10 +207,10 @@ export default function Dashboard() {
     setUploadingAvatar(true);
     try {
       const res = await axios.post('/api/upload', form, { headers: { 'Content-Type': 'multipart/form-data' } });
-      setSiteForm({ ...siteForm, avatarUrl: res.data.url });
+      setSiteForm((current) => ({ ...current, avatarUrl: res.data.url }));
     } catch (err) {
       console.error(err);
-      alert('Avatar upload failed');
+      setNotice({ error: true, text: err.response?.data?.error || 'Avatar upload failed.' });
     } finally {
       setUploadingAvatar(false);
     }
@@ -223,10 +225,10 @@ export default function Dashboard() {
     setUploadingProjImg(true);
     try {
       const res = await axios.post('/api/upload', form, { headers: { 'Content-Type': 'multipart/form-data' } });
-      setProjForm({ ...projForm, imageUrl: res.data.url });
+      setProjForm((current) => ({ ...current, imageUrl: res.data.url }));
     } catch (err) {
       console.error(err);
-      alert('Project image upload failed');
+      setNotice({ error: true, text: err.response?.data?.error || 'Project image upload failed.' });
     } finally {
       setUploadingProjImg(false);
     }
@@ -248,7 +250,21 @@ export default function Dashboard() {
 
   const handleSaveProfile = (e) => {
     e.preventDefault();
-    updateSiteInfo.mutate(siteForm);
+    if (updateSiteInfo.isLoading || !siteForm.name.trim()) {
+      if (!siteForm.name.trim()) setNotice({ error: true, text: 'Enter a name in Profile before publishing.' });
+      return;
+    }
+    const list = (value) => Array.isArray(value) ? value : value.split(/[,\n]/).map((item) => item.trim()).filter(Boolean);
+    setNotice(null);
+    updateSiteInfo.mutate({
+      ...siteForm,
+      siteContent: {
+        ...siteForm.siteContent,
+        skills: { ...siteForm.siteContent.skills, customCategories: true },
+        footer: { ...siteForm.siteContent.footer, services: list(siteForm.siteContent.footer.services) },
+        marqueeSkills: list(siteForm.siteContent.marqueeSkills),
+      },
+    });
   };
 
   const updateSiteContentField = (section, field, value) => {
@@ -283,6 +299,7 @@ export default function Dashboard() {
       section: 'navigation',
       fields: [
         ['logoText', 'Logo text'],
+        ['logoSuffix', 'Logo suffix'],
         ['homeLabel', 'Home link'],
         ['aboutLabel', 'About link'],
         ['servicesLabel', 'Services link'],
@@ -297,8 +314,13 @@ export default function Dashboard() {
       title: 'Home page',
       section: 'home',
       fields: [
-        ['metaDescription', 'SEO description'],
+        ['greeting', 'Greeting before your name'],
+        ['scrollLabel', 'Scroll link label'],
         ['eyebrow', 'Availability badge'],
+        ['experienceNote', 'What clients can expect'],
+        ['visualEyebrow', 'Hero card label'],
+        ['visualTitle', 'Hero card heading'],
+        ['visualDescription', 'Hero card description', true],
         ['description', 'Hero description', true],
         ['primaryAction', 'Primary button'],
         ['secondaryAction', 'Secondary button'],
@@ -306,6 +328,9 @@ export default function Dashboard() {
         ['browseLinkLabel', 'Browse link label'],
         ['projectsTitle', 'Featured projects heading'],
         ['projectsDescription', 'Featured projects description', true],
+        ['servicesTitle', 'Services shown when no case studies are published'],
+        ['servicesDescription', 'Services section introduction', true],
+        ['viewAllServicesLabel', 'All services link'],
         ['projectsEmpty', 'Empty projects message', true],
         ['ctaTitle', 'Bottom call-to-action heading'],
         ['ctaDescription', 'Bottom call-to-action description', true],
@@ -318,7 +343,6 @@ export default function Dashboard() {
       title: 'About page',
       section: 'about',
       fields: [
-        ['metaDescription', 'SEO description'],
         ['title', 'Page heading'],
         ['whoTitle', 'First section heading'],
         ['whoDescription', 'First section text', true],
@@ -337,11 +361,12 @@ export default function Dashboard() {
       title: 'Projects page',
       section: 'projects',
       fields: [
-        ['metaDescription', 'SEO description'],
         ['title', 'Page heading'],
         ['description', 'Page introduction', true],
         ['emptyTitle', 'Empty state heading'],
         ['emptyDescription', 'Empty state description', true],
+        ['projectTypesTitle', 'Project types heading'],
+        ['projectTypesDescription', 'Project types introduction', true],
         ['ctaTitle', 'Call-to-action heading'],
         ['ctaDescription', 'Call-to-action description', true],
         ['ctaButton', 'Call-to-action button'],
@@ -354,7 +379,7 @@ export default function Dashboard() {
       title: 'Services page',
       section: 'services',
       fields: [
-        ['metaDescription', 'SEO description'],
+        ['emptyMessage', 'Empty state message'],
         ['eyebrow', 'Eyebrow'],
         ['title', 'Page heading'],
         ['description', 'Page introduction', true],
@@ -367,7 +392,7 @@ export default function Dashboard() {
       title: 'Skills page',
       section: 'skills',
       fields: [
-        ['metaDescription', 'SEO description'],
+        ['additionalSkillsTitle', 'Additional skills heading'],
         ['eyebrow', 'Eyebrow'],
         ['title', 'Page heading'],
         ['description', 'Page introduction', true],
@@ -380,7 +405,7 @@ export default function Dashboard() {
       title: 'Experience page & education',
       section: 'experience',
       fields: [
-        ['metaDescription', 'SEO description'],
+        ['emptyMessage', 'Empty state message'],
         ['eyebrow', 'Eyebrow'],
         ['title', 'Page heading'],
         ['description', 'Page introduction', true],
@@ -398,7 +423,25 @@ export default function Dashboard() {
       title: 'Contact page',
       section: 'contact',
       fields: [
-        ['metaDescription', 'SEO description'],
+        ['namePlaceholder', 'Name placeholder'],
+        ['emailPlaceholder', 'Email placeholder'],
+        ['subjectPlaceholder', 'Subject placeholder'],
+        ['messagePlaceholder', 'Message placeholder'],
+        ['nextStepTitle', 'Next steps heading'],
+        ['nextStep1', 'Next step one'],
+        ['nextStep2', 'Next step two'],
+        ['nextStep3', 'Next step three'],
+        ['projectBriefHint', 'Project brief helper text'],
+        ['projectTypeLabel', 'Project type label'],
+        ['projectTypePlaceholder', 'Project type placeholder'],
+        ['businessWebsiteOption', 'Business website option'],
+        ['webApplicationOption', 'Web application option'],
+        ['mobileApplicationOption', 'Mobile application option'],
+        ['ecommerceOption', 'E-commerce option'],
+        ['apiOption', 'API project option'],
+        ['otherProjectOption', 'Other project option'],
+        ['timelineLabel', 'Timeline field label'],
+        ['timelinePlaceholder', 'Timeline placeholder'],
         ['title', 'Page heading'],
         ['description', 'Page introduction', true],
         ['formTitle', 'Contact form heading'],
@@ -425,6 +468,8 @@ export default function Dashboard() {
         ['contactTitle', 'Contact heading'],
         ['ctaButton', 'Contact button'],
         ['copyrightName', 'Copyright name'],
+        ['craftNote', 'Footer note'],
+        ['backToTopLabel', 'Back to top label'],
       ],
     },
   ];
@@ -454,44 +499,60 @@ export default function Dashboard() {
     );
   };
 
+  const collection = { projects, services, experience: experiences }[activeTab];
+  const collectionTab = ['projects', 'services', 'experience'].includes(activeTab);
+  const waiting = collectionTab ? !collection : !siteInfo;
+  const loadError = collectionTab
+    ? { projects: projectsError, services: servicesError, experience: experiencesError }[activeTab]
+    : siteInfoError;
+  const retry = collectionTab
+    ? { projects: reloadprojects, services: reloadservices, experience: reloadexperiences }[activeTab]
+    : reloadsiteInfo;
+
   return (
     <>
       <Head>
-        <title>Full Admin Control Center — Suraj Gupta</title>
+        <title>Portfolio admin</title>
+        <meta name="robots" content="noindex, nofollow" />
       </Head>
-      <Navbar />
 
-      <main className="min-h-screen pt-24 pb-20 px-4 sm:px-6 lg:px-8 bg-slate-950 text-slate-100">
+      <main className="min-h-screen pt-10 pb-20 px-4 sm:px-6 lg:px-8 bg-slate-950 text-slate-100">
         <div className="mx-auto max-w-7xl">
           {/* Header */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-800 pb-6 mb-8">
             <div>
               <h1 className="text-3xl font-bold text-slate-50">
-                Master <span className="text-gradient">Admin Center</span>
+                Portfolio admin
               </h1>
-              <p className="text-sm text-slate-400 mt-1">Manage all portfolio content, photos, skills, and projects</p>
+              <p className="text-sm text-slate-400 mt-1">Edit and publish your portfolio</p>
             </div>
+            <div className="flex flex-wrap items-center gap-3">
+            <Link href="/" className="text-sm font-medium text-blue-300 hover:underline">View website</Link>
             <button
               onClick={() => signOut()}
               className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-2 text-sm text-slate-300 transition hover:bg-rose-950/40 hover:text-rose-300 self-start sm:self-auto"
             >
-              <FaSignOutAlt /> Sign Out
+              <FaSignOutAlt /> Sign out
             </button>
+            </div>
           </div>
 
           {/* Navigation Tabs */}
           <div className="flex flex-wrap gap-2 border-b border-slate-800 pb-4 mb-8">
             {[
-              { id: 'profile', label: '👤 Profile & Photo' },
-              { id: 'content', label: '📝 Website Content' },
-              { id: 'skills', label: '⚡ Skills Management' },
-              { id: 'projects', label: '🚀 Projects Manager' },
-              { id: 'services', label: '🛠️ Services' },
-              { id: 'experience', label: '💼 Career Experience' },
+              { id: 'profile', label: 'Profile' },
+              { id: 'content', label: 'Page content' },
+              { id: 'appearance', label: 'Appearance' },
+              { id: 'seo', label: 'SEO' },
+              { id: 'skills', label: 'Skills' },
+              { id: 'projects', label: 'Projects' },
+              { id: 'services', label: 'Services' },
+              { id: 'experience', label: 'Experience' },
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                aria-pressed={activeTab === tab.id}
+                onClick={() => { setActiveTab(tab.id); setNotice(null); }}
                 className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
                   activeTab === tab.id
                     ? 'bg-blue-600 text-white shadow-md shadow-blue-900/30'
@@ -503,8 +564,26 @@ export default function Dashboard() {
             ))}
           </div>
 
-          {/* TAB 1: Profile & Photo */}
-          {activeTab === 'profile' && (
+          {notice && (
+            <div role={notice.error ? 'alert' : 'status'} className="sticky top-3 z-10 mb-6 flex justify-between gap-4 rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-sm">
+              <p className={notice.error ? 'text-rose-300' : 'text-emerald-300'}>{notice.text}</p>
+              <button type="button" aria-label="Dismiss notification" onClick={() => setNotice(null)}>×</button>
+            </div>
+          )}
+          {loadError && (
+            <div role="alert" className="mb-6 rounded-lg border border-rose-900 bg-rose-950/30 p-4 text-sm text-rose-200">
+              Could not load saved content. <button type="button" className="underline" onClick={retry}>Retry</button>
+            </div>
+          )}
+          {waiting && !loadError && <p role="status" className="text-sm text-slate-300">Loading saved content…</p>}
+
+          {!waiting && (activeTab === 'appearance' || activeTab === 'seo') && (
+            <SiteSettings tab={activeTab} siteForm={siteForm} update={updateSiteContentField}
+              save={handleSaveProfile} saving={updateSiteInfo.isLoading} setNotice={setNotice} />
+          )}
+
+          {/* Profile and photo */}
+          {!waiting && activeTab === 'profile' && (
             <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 sm:p-8 backdrop-blur-sm max-w-4xl">
               <h2 className="text-xl font-bold text-slate-50 mb-6">Profile &amp; Biography Settings</h2>
               <form onSubmit={handleSaveProfile} className="space-y-6">
@@ -524,7 +603,7 @@ export default function Dashboard() {
                     <label className="block text-sm font-medium text-slate-200">Profile Photo / Avatar</label>
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg,image/png,image/webp"
                       onChange={handleAvatarUpload}
                       className="block w-full text-xs text-slate-400 file:mr-4 file:rounded-lg file:border-0 file:bg-slate-800 file:px-4 file:py-2 file:text-xs file:font-medium file:text-blue-400 hover:file:bg-slate-700 cursor-pointer"
                     />
@@ -581,10 +660,14 @@ export default function Dashboard() {
                   <div>
                     <label className="block text-xs font-medium uppercase tracking-wider text-slate-400 mb-1">Phone</label>
                     <input
+                      type="tel"
+                      autoComplete="tel"
+                      placeholder="+91 98765 43210"
                       className="w-full rounded-lg border border-slate-700 bg-slate-800/50 px-4 py-2.5 text-sm text-slate-100 focus:border-blue-500 outline-none"
                       value={siteForm.phone}
                       onChange={(e) => setSiteForm({ ...siteForm, phone: e.target.value })}
                     />
+                    <p className="mt-1 text-xs text-slate-400">Include your country code to enable the WhatsApp button across the site.</p>
                   </div>
                   <div>
                     <label className="block text-xs font-medium uppercase tracking-wider text-slate-400 mb-1">Location</label>
@@ -616,7 +699,7 @@ export default function Dashboard() {
 
                 <button
                   type="submit"
-                  disabled={updateSiteInfo.isLoading}
+                  disabled={uploadingAvatar || updateSiteInfo.isLoading}
                   className="flex items-center justify-center gap-2 w-full rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 py-3 text-sm font-semibold text-white shadow-lg transition hover:from-blue-500 hover:to-blue-400"
                 >
                   <FaSave /> Save Profile Changes
@@ -626,7 +709,7 @@ export default function Dashboard() {
           )}
 
           {/* Website content editor */}
-          {activeTab === 'content' && (
+          {!waiting && activeTab === 'content' && (
             <form onSubmit={handleSaveProfile} className="space-y-6">
               {contentGroups.map((group) => (
                 <section key={group.section} className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 sm:p-8">
@@ -640,12 +723,12 @@ export default function Dashboard() {
                       <textarea
                         rows={2}
                         className="w-full rounded-lg border border-slate-700 bg-slate-800/50 px-4 py-2.5 text-sm text-slate-100 outline-none focus:border-blue-500"
-                        value={siteForm.siteContent.footer.services.join(', ')}
+                        value={Array.isArray(siteForm.siteContent.footer.services) ? siteForm.siteContent.footer.services.join(', ') : siteForm.siteContent.footer.services}
                         onChange={(e) =>
                           updateSiteContentField(
                             'footer',
                             'services',
-                            e.target.value.split(',').map((item) => item.trim()).filter(Boolean)
+                            e.target.value
                           )
                         }
                       />
@@ -665,13 +748,13 @@ export default function Dashboard() {
                 <textarea
                   rows={3}
                   className="w-full rounded-lg border border-slate-700 bg-slate-800/50 px-4 py-2.5 text-sm text-slate-100 outline-none focus:border-blue-500"
-                  value={siteForm.siteContent.marqueeSkills.join(', ')}
+                  value={Array.isArray(siteForm.siteContent.marqueeSkills) ? siteForm.siteContent.marqueeSkills.join(', ') : siteForm.siteContent.marqueeSkills}
                   onChange={(e) =>
                     setSiteForm((current) => ({
                       ...current,
                       siteContent: {
                         ...current.siteContent,
-                        marqueeSkills: e.target.value.split(',').map((item) => item.trim()).filter(Boolean),
+                        marqueeSkills: e.target.value,
                       },
                     }))
                   }
@@ -689,7 +772,7 @@ export default function Dashboard() {
           )}
 
           {/* TAB 2: Skills Management */}
-          {activeTab === 'skills' && (
+          {!waiting && activeTab === 'skills' && (
             <div className="space-y-6">
               <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 sm:p-8 max-w-4xl">
               <h2 className="text-xl font-bold text-slate-50 mb-2">Portfolio Skills</h2>
@@ -834,7 +917,7 @@ export default function Dashboard() {
           )}
 
           {/* TAB 3: Projects Manager */}
-          {activeTab === 'projects' && (
+          {!waiting && activeTab === 'projects' && (
             <div className="space-y-12">
               {/* Add Project Form */}
               <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 sm:p-8 max-w-4xl">
@@ -908,7 +991,7 @@ export default function Dashboard() {
                     <label className="block text-xs font-medium uppercase tracking-wider text-slate-400 mb-1">Project Screenshot</label>
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg,image/png,image/webp"
                       onChange={handleProjImageUpload}
                       className="block w-full text-xs text-slate-400 file:mr-4 file:rounded-lg file:border-0 file:bg-slate-800 file:px-4 file:py-2 file:text-xs file:font-medium file:text-blue-400 hover:file:bg-slate-700"
                     />
@@ -920,11 +1003,15 @@ export default function Dashboard() {
                       value={projForm.imageUrl}
                       onChange={(e) => setProjForm({ ...projForm, imageUrl: e.target.value })}
                     />
+                      <label className="mt-3 block text-sm text-slate-300">Image alternative text
+                        <input className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 p-2.5" value={projForm.imageAlt || ''}
+                          onChange={(event) => setProjForm({ ...projForm, imageAlt: event.target.value })} />
+                      </label>
                   </div>
 
                   <button
                     type="submit"
-                    disabled={addProject.isLoading || updateProject.isLoading}
+                    disabled={uploadingProjImg || addProject.isLoading || updateProject.isLoading}
                     className="flex items-center justify-center gap-2 w-full rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 py-3 text-sm font-semibold text-white shadow-lg transition hover:from-blue-500"
                   >
                     {editingProject ? <FaSave /> : <FaPlus />} {editingProject ? 'Save Project' : 'Add Project'}
@@ -980,7 +1067,7 @@ export default function Dashboard() {
                                   techStack: p.techStack || [],
                                   demoUrl: p.demoUrl || '',
                                   repoUrl: p.repoUrl || '',
-                                  imageUrl: p.imageUrl || '',
+                                  imageUrl: p.imageUrl || '', imageAlt: p.imageAlt || '',
                                 });
                               }}
                               className="flex items-center gap-1 rounded border border-blue-900/60 px-2.5 py-1 text-xs text-blue-300 hover:bg-blue-950/40"
@@ -1008,7 +1095,7 @@ export default function Dashboard() {
           )}
 
           {/* TAB 4: Services */}
-          {activeTab === 'services' && (
+          {!waiting && activeTab === 'services' && (
             <div className="space-y-12">
               <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 sm:p-8 max-w-4xl">
                 <h2 className="text-xl font-bold text-slate-50 mb-6">{editingService ? 'Edit Service' : 'Add New Service'}</h2>
@@ -1138,7 +1225,7 @@ export default function Dashboard() {
           )}
 
           {/* TAB 5: Experience */}
-          {activeTab === 'experience' && (
+          {!waiting && activeTab === 'experience' && (
             <div className="space-y-12">
               <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 sm:p-8 max-w-4xl">
                 <h2 className="text-xl font-bold text-slate-50 mb-6">{editingExperience ? 'Edit Experience' : 'Add Experience Entry'}</h2>
@@ -1173,7 +1260,7 @@ export default function Dashboard() {
                       <label className="block text-xs font-medium uppercase tracking-wider text-slate-400 mb-1">Company</label>
                       <input
                         required
-                        placeholder="e.g. Apex Digital Systems"
+                        placeholder="Company, client, or project name"
                         className="w-full rounded-lg border border-slate-700 bg-slate-800/50 px-4 py-2.5 text-sm text-slate-100 outline-none focus:border-blue-500"
                         value={expForm.company}
                         onChange={(e) => setExpForm({ ...expForm, company: e.target.value })}
@@ -1290,7 +1377,8 @@ export default function Dashboard() {
         </div>
       </main>
 
-      <Footer />
     </>
   );
 }
+
+Dashboard.adminPage = true;

@@ -1,8 +1,13 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Syne:wght@600;700;800&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --portfolio-accent: #3b82f6;
+  --portfolio-highlight: #22d3ee;
+  --portfolio-surface: #020617;
+  --portfolio-text: #f8fafc;
+}
 
 html {
   scroll-behavior: smooth;
@@ -14,6 +19,98 @@ body {
 
 .text-gradient {
   @apply bg-gradient-to-r from-blue-400 via-blue-500 to-cyan-400 bg-clip-text text-transparent;
+}
+
+.page-transition {
+  animation: page-enter 240ms ease-out both;
+}
+
+.portfolio-card-enter {
+  animation: card-enter 420ms cubic-bezier(.2,.75,.3,1) both;
+  animation-delay: var(--card-delay, 0ms);
+}
+
+.route-progress {
+  position: fixed;
+  z-index: 100;
+  top: 0;
+  left: 0;
+  height: 2px;
+  width: 0;
+  opacity: 0;
+  background: linear-gradient(90deg, #3b82f6, #22d3ee);
+  box-shadow: 0 0 12px #3b82f680;
+  transition: width 180ms ease, opacity 180ms ease;
+}
+
+.route-progress--active {
+  width: 82%;
+  opacity: 1;
+}
+
+.whatsapp-float {
+  position: fixed;
+  right: max(1.25rem, env(safe-area-inset-right));
+  bottom: max(1.25rem, env(safe-area-inset-bottom));
+  z-index: 60;
+  display: inline-flex;
+  width: 3.5rem;
+  height: 3.5rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 9999px;
+  background: #25d366;
+  color: #052e16;
+  box-shadow: 0 10px 30px rgba(37, 211, 102, 0.3);
+  font-size: 1.8rem;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.whatsapp-float:hover,
+.whatsapp-float:focus-visible {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 34px rgba(37, 211, 102, 0.42);
+}
+
+.whatsapp-float span {
+  position: absolute;
+  right: calc(100% + 0.75rem);
+  padding: 0.55rem 0.75rem;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 0.65rem;
+  background: #0f172a;
+  color: #f8fafc;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(0.3rem);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.whatsapp-float:hover span,
+.whatsapp-float:focus-visible span {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .whatsapp-float,
+  .whatsapp-float span {
+    transition: none;
+  }
+}
+
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes card-enter {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .marquee-container {
@@ -37,3 +134,10 @@ body {
 ::-webkit-scrollbar-track { background: #0f172a; }
 ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .marquee-track { animation: none; }
+  .page-transition, .portfolio-card-enter { animation: none; }
+  .route-progress { transition: none; }
+}

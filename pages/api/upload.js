@@ -1,51 +1,48 @@
-import nextConnect from 'next-connect';
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
+import { connectToDatabase } from '../../lib/mongoose';
 import { requireAdmin } from '../../lib/requireAdmin';
+import Media from '../../models/Media';
+import { writeLocalMedia } from '../../lib/localStore';
 
-// Ensure the upload directory exists
-const uploadDir = './public/uploads';
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+const upload = multer({ limits: { fileSize: 4 * 1024 * 1024, files: 1, fields: 0 } }).single('file');
+
+function imageType(bytes) {
+  if (!bytes) return '';
+  if (bytes.subarray(0, 3).equals(Buffer.from([255, 216, 255]))) return 'image/jpeg';
+  if (bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) return 'image/png';
+  if (bytes.toString('ascii', 0, 4) === 'RIFF' && bytes.toString('ascii', 8, 12) === 'WEBP') return 'image/webp';
+  return '';
 }
 
-const upload = multer({
-  storage: multer.diskStorage({
-    destination: uploadDir,
-    filename: (req, file, cb) => {
-      const ext = path.extname(file.originalname);
-      const name = `${Date.now()}${ext}`;
-      cb(null, name);
-    },
-  }),
-});
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    return res.status(405).end();
+  }
 
-const apiRoute = nextConnect({
-  onError(error, req, res) {
-    console.error(error);
-    res.status(501).json({ error: `Sorry something happened! ${error.message}` });
-  },
-  onNoMatch(req, res) {
-    res.status(405).json({ error: `Method '${req.method}' Not Allowed` });
-  },
-});
+  if (!(await requireAdmin(req, res))) return;
 
-apiRoute.use(async (req, res, next) => {
-  if (await requireAdmin(req, res)) next();
-});
+  try {
+    await new Promise((resolve, reject) => upload(req, res, (error) => error ? reject(error) : resolve()));
+  } catch {
+    return res.status(400).json({ error: 'Choose a JPEG, PNG, or WebP image up to 4 MB.' });
+  }
 
-apiRoute.use(upload.single('file'));
+  const bytes = req.file?.buffer;
+  const contentType = imageType(bytes);
+  if (!contentType) return res.status(400).json({ error: 'Choose a JPEG, PNG, or WebP image.' });
 
-apiRoute.post((req, res) => {
-  const fileUrl = `/uploads/${req.file.filename}`;
-  res.status(200).json({ url: fileUrl });
-});
+  try {
+    await connectToDatabase();
+    const media = await Media.create({ bytes, contentType });
+    return res.status(201).json({ url: '/api/media/' + media.id });
+  } catch {
+    if (process.env.NODE_ENV === 'development') {
+      const media = await writeLocalMedia(bytes, contentType);
+      return res.status(201).json({ url: '/api/media/' + media.id });
+    }
+    return res.status(503).json({ error: 'Unable to store this image. Try again shortly.' });
+  }
+}
 
-export default apiRoute;
-
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+export const config = { api: { bodyParser: false } };

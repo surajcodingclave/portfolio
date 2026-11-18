@@ -1,20 +1,17 @@
+import { useSite } from '../lib/siteContext';
 import Link from 'next/link';
-import { FaGithub, FaLinkedin, FaTwitter, FaEnvelope, FaPhone, FaMapMarkerAlt, FaHeart, FaArrowUp } from 'react-icons/fa';
-import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
-import { getSiteContent } from '../lib/siteContent';
+import { FaGithub, FaLinkedin, FaTwitter, FaEnvelope, FaPhone, FaMapMarkerAlt, FaArrowUp } from 'react-icons/fa';
 
 export default function Footer() {
-  const { data: siteInfo } = useQuery(['siteInfo'], () => axios.get('/api/siteinfo').then((r) => r.data));
-  const content = getSiteContent(siteInfo);
+  const { siteInfo, content } = useSite();
   const footer = content.footer;
   const navigation = content.navigation;
-  const email = siteInfo?.contactEmail || 'surajgupta.dev@example.com';
+  const email = siteInfo?.contactEmail || '';
   const socialLinks = [
     { href: siteInfo?.socialLinks?.github, icon: FaGithub, label: 'GitHub' },
     { href: siteInfo?.socialLinks?.linkedin, icon: FaLinkedin, label: 'LinkedIn' },
     { href: siteInfo?.socialLinks?.twitter, icon: FaTwitter, label: 'Twitter' },
-    { href: `mailto:${email}`, icon: FaEnvelope, label: 'Email' },
+    ...(email ? [{ href: `mailto:${email}`, icon: FaEnvelope, label: 'Email' }] : []),
   ].filter((social) => social.href);
 
   const scrollToTop = () => {
@@ -24,7 +21,7 @@ export default function Footer() {
   };
 
   const navLinks = [
-    { href: '/', label: 'Home' },
+    { href: '/', label: navigation.homeLabel },
     { href: '/about', label: navigation.aboutLabel },
     { href: '/services', label: navigation.servicesLabel },
     { href: '/skills', label: navigation.skillsLabel },
@@ -43,7 +40,7 @@ export default function Footer() {
           {/* Col 1: Brand & Bio */}
           <div className="space-y-4">
             <Link href="/" className="font-display text-2xl font-bold text-slate-50 hover:text-blue-400 transition-colors inline-block">
-              {navigation.logoText}<span className="text-blue-400">.</span>
+              {navigation.logoText}<span className="text-blue-400">{navigation.logoSuffix}</span>
             </Link>
             <p className="text-sm leading-relaxed text-slate-400">
               {footer.bio}
@@ -94,20 +91,26 @@ export default function Footer() {
           {/* Col 4: Contact & Office */}
           <div className="space-y-3">
             <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-100 mb-4">{footer.contactTitle}</h4>
-            <div className="flex items-start gap-3 text-sm text-slate-400">
-              <FaMapMarkerAlt className="h-4 w-4 text-blue-400 mt-1 flex-shrink-0" />
-              <span>{siteInfo?.location || 'India'}</span>
-            </div>
-            <div className="flex items-center gap-3 text-sm text-slate-400">
-              <FaEnvelope className="h-4 w-4 text-blue-400 flex-shrink-0" />
-              <a href={`mailto:${email}`} className="hover:text-blue-400 transition-colors">
-                {email}
-              </a>
-            </div>
-            <div className="flex items-center gap-3 text-sm text-slate-400">
-              <FaPhone className="h-4 w-4 text-blue-400 flex-shrink-0" />
-              <span>{siteInfo?.phone || ''}</span>
-            </div>
+            {siteInfo?.location && (
+              <div className="flex items-start gap-3 text-sm text-slate-400">
+                <FaMapMarkerAlt className="h-4 w-4 text-blue-400 mt-1 flex-shrink-0" />
+                <span>{siteInfo.location}</span>
+              </div>
+            )}
+            {email && (
+              <div className="flex items-center gap-3 text-sm text-slate-400">
+                <FaEnvelope className="h-4 w-4 text-blue-400 flex-shrink-0" />
+                <a href={`mailto:${email}`} className="hover:text-blue-400 transition-colors">
+                  {email}
+                </a>
+              </div>
+            )}
+            {siteInfo?.phone && (
+              <div className="flex items-center gap-3 text-sm text-slate-400">
+                <FaPhone className="h-4 w-4 text-blue-400 flex-shrink-0" />
+                <span>{siteInfo.phone}</span>
+              </div>
+            )}
             <div className="pt-3">
               <Link
                 href="/contact"
@@ -122,19 +125,16 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="border-t border-slate-800/70 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
           <p className="flex items-center gap-1">
-            &copy; {new Date().getFullYear()} <span className="text-slate-300 font-medium">{footer.copyrightName}</span>. Handcrafted with <FaHeart className="text-rose-500 inline h-3 w-3" /> & Next.js.
+            &copy; {new Date().getFullYear()} <span className="text-slate-300 font-medium">{footer.copyrightName}</span>. {footer.craftNote}
           </p>
 
           <div className="flex items-center gap-6">
-            <Link href="/admin/dashboard" className="hover:text-slate-400 transition-colors">
-              Admin Portal
-            </Link>
             <button
               onClick={scrollToTop}
               className="flex items-center gap-1.5 rounded-md border border-slate-800 bg-slate-900 px-3 py-1.5 text-slate-400 hover:border-blue-500/40 hover:text-blue-300 transition"
               aria-label="Back to top"
             >
-              <span>Back to Top</span>
+              <span>{footer.backToTopLabel}</span>
               <FaArrowUp className="h-2.5 w-2.5" />
             </button>
           </div>

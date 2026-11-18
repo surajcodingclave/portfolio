@@ -1,18 +1,16 @@
-import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
-import { getSiteContent } from '../lib/siteContent';
+import { useSite } from '../lib/siteContext';
 
 export default function ProjectCard({ project }) {
-  const { data: siteInfo } = useQuery(['siteInfo'], () => axios.get('/api/siteinfo').then((r) => r.data));
-  const content = getSiteContent(siteInfo).projects;
+  const { content: { projects: content } } = useSite();
 
   return (
-    <article className="group overflow-hidden rounded-2xl border border-slate-700/60 bg-slate-900/55 transition-all duration-300 hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-950/20">
+    <article className="portfolio-card-enter group overflow-hidden rounded-2xl border border-slate-700/60 bg-slate-900/55 transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-950/20">
       {project.imageUrl && (
         <div className="relative aspect-video overflow-hidden border-b border-slate-800 bg-slate-950">
           <img
             src={project.imageUrl}
-            alt={project.title}
+            alt={project.imageAlt || project.title}
+            loading="lazy" decoding="async"
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
           />
         </div>
@@ -23,7 +21,7 @@ export default function ProjectCard({ project }) {
             {project.title}
           </h3>
         </div>
-        <p className="line-clamp-2 text-sm leading-relaxed text-slate-400">
+        <p className="text-sm leading-relaxed text-slate-400">
           {project.description}
         </p>
         <div className="flex gap-3">
@@ -49,9 +47,6 @@ export default function ProjectCard({ project }) {
             ))}
           </ul>
         )}
-        <p className="mt-auto text-xs font-medium text-slate-500 transition-colors group-hover:text-blue-400">
-          {content.detailsLabel} &rarr;
-        </p>
       </div>
     </article>
   );

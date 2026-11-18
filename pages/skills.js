@@ -1,28 +1,21 @@
-import Head from 'next/head';
+import PageSEO from '../components/PageSEO';
+import { publicPageProps } from '../lib/publicData';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import TechMarquee from '../components/TechMarquee';
 import Link from 'next/link';
-import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
 import { FaReact, FaNodeJs, FaPhp, FaPython, FaDatabase, FaTools } from 'react-icons/fa';
 import { getSiteContent, defaultSkillCategories } from '../lib/siteContent';
 
-export default function SkillsPage() {
-  const { data: siteInfo } = useQuery(['siteInfo'], () =>
-    axios.get('/api/siteinfo').then((r) => r.data)
-  );
+export default function SkillsPage({ origin, siteInfo }) {
 
   const content = getSiteContent(siteInfo);
   const categoryIcons = { FaReact, FaNodeJs, FaPhp, FaPython, FaDatabase, FaTools };
-  const skillCategories = siteInfo?.skillCategories?.length ? siteInfo.skillCategories : defaultSkillCategories;
+  const skillCategories = siteInfo?.siteContent?.skills?.customCategories ? siteInfo.skillCategories : siteInfo?.skillCategories?.length ? siteInfo.skillCategories : defaultSkillCategories;
 
   return (
     <>
-      <Head>
-        <title>{content.skills.title} — {siteInfo?.name || 'Suraj Gupta'}</title>
-        <meta name="description" content={content.skills.metaDescription} />
-      </Head>
+      <PageSEO page="skills" origin={origin} />
 
       <Navbar />
 
@@ -74,7 +67,7 @@ export default function SkillsPage() {
             {/* Dynamic Skills List from DB */}
             {siteInfo?.skills && siteInfo.skills.length > 0 && (
               <div className="mt-12 rounded-2xl border border-slate-800 bg-slate-900/40 p-8">
-                <h3 className="text-lg font-semibold text-slate-50 mb-4">Database Configured Skills</h3>
+                <h3 className="text-lg font-semibold text-slate-50 mb-4">{content.skills.additionalSkillsTitle}</h3>
                 <div className="flex flex-wrap gap-2">
                   {siteInfo.skills.map((s, i) => (
                     <span
@@ -106,7 +99,7 @@ export default function SkillsPage() {
             </p>
             <div className="mt-8 flex justify-center gap-4">
               <Link
-                href="/projects"
+                href="/contact"
                 className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 px-6 py-3 text-sm font-medium text-white shadow-lg transition hover:from-blue-500 hover:to-blue-400"
               >
                 {content.skills.ctaButton}
@@ -119,4 +112,8 @@ export default function SkillsPage() {
       <Footer />
     </>
   );
+}
+
+export function getStaticProps() {
+  return publicPageProps('skills');
 }

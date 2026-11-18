@@ -1,9 +1,8 @@
-import Head from 'next/head';
+import PageSEO from '../components/PageSEO';
+import { publicPageProps } from '../lib/publicData';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Link from 'next/link';
-import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
 import { getSiteContent } from '../lib/siteContent';
 import { FaCode, FaServer, FaDatabase, FaMobileAlt, FaCloud, FaRocket } from 'react-icons/fa';
 
@@ -16,19 +15,12 @@ const iconMap = {
   FaRocket: FaRocket,
 };
 
-export default function ServicesPage() {
-  const { data: services, isLoading } = useQuery(['services'], () =>
-    axios.get('/api/services').then((r) => r.data)
-  );
-  const { data: siteInfo } = useQuery(['siteInfo'], () => axios.get('/api/siteinfo').then((r) => r.data));
+export default function ServicesPage({ origin, siteInfo, services }) {
   const content = getSiteContent(siteInfo);
 
   return (
     <>
-      <Head>
-        <title>{content.services.title} — {siteInfo?.name || 'Suraj Gupta'}</title>
-        <meta name="description" content={content.services.metaDescription} />
-      </Head>
+      <PageSEO page="services" origin={origin} />
 
       <Navbar />
 
@@ -47,18 +39,15 @@ export default function ServicesPage() {
               </p>
             </div>
 
-            {isLoading ? (
-              <div className="flex justify-center py-20">
-                <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
-              </div>
-            ) : (
+            {services.length ? (
               <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-                {services?.map((service) => {
+                {services?.map((service, index) => {
                   const IconComponent = iconMap[service.icon] || FaCode;
                   return (
                     <article
                       key={service._id}
-                      className="group relative rounded-2xl border border-slate-700/60 bg-slate-900/55 p-8 transition-all duration-300 hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-950/20"
+                      style={{ '--card-delay': `${Math.min(index, 5) * 55}ms` }}
+                      className="portfolio-card-enter group relative rounded-2xl border border-slate-700/60 bg-slate-900/55 p-8 transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-950/20"
                     >
                       <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl border border-slate-700/80 bg-slate-800/60 text-blue-400 group-hover:border-blue-500/50 group-hover:text-blue-300 transition-colors">
                         <IconComponent className="h-7 w-7" />
@@ -86,7 +75,7 @@ export default function ServicesPage() {
                   );
                 })}
               </div>
-            )}
+            ) : <p className="text-center text-slate-400">{content.services.emptyMessage}</p>}
           </div>
         </section>
 
@@ -114,4 +103,8 @@ export default function ServicesPage() {
       <Footer />
     </>
   );
+}
+
+export function getStaticProps() {
+  return publicPageProps('services', 'services');
 }

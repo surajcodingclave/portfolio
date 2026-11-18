@@ -1,17 +1,12 @@
+import { useSite } from '../lib/siteContext';
 import Link from 'next/link';
-import { useSession } from 'next-auth/react';
 import { useState } from 'react';
 import { useRouter } from 'next/router';
-import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
-import { getSiteContent } from '../lib/siteContent';
 
 export default function Navbar() {
-  const { data: session } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
-  const { data: siteInfo } = useQuery(['siteInfo'], () => axios.get('/api/siteinfo').then((r) => r.data));
-  const content = getSiteContent(siteInfo);
+  const { content } = useSite();
   const navigation = content.navigation;
 
   const links = [
@@ -31,7 +26,7 @@ export default function Navbar() {
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="font-display text-xl font-bold text-slate-50 hover:text-blue-400 transition-colors">
-          {navigation.logoText}<span className="text-blue-400">.</span>
+          {navigation.logoText}<span className="text-blue-400">{navigation.logoSuffix}</span>
         </Link>
 
         {/* Desktop nav */}
@@ -40,6 +35,8 @@ export default function Navbar() {
             <li key={link.href}>
               <Link
                 href={link.href}
+                onMouseEnter={() => router.prefetch(link.href)}
+                onFocus={() => router.prefetch(link.href)}
                 className={`rounded-lg px-3 py-2 text-sm transition-colors ${
                   isActive(link.href)
                     ? 'bg-slate-800/60 text-slate-50'
@@ -52,7 +49,7 @@ export default function Navbar() {
           ))}
         </ul>
 
-        {/* CTA & Admin */}
+        {/* Project CTA */}
         <div className="hidden lg:flex items-center gap-3">
           <Link
             href="/contact"
@@ -60,15 +57,6 @@ export default function Navbar() {
           >
             {navigation.hireMeLabel}
           </Link>
-          {session ? (
-            <Link href="/admin/dashboard" className="text-sm font-medium text-blue-400 hover:underline">
-              Admin
-            </Link>
-          ) : (
-            <Link href="/admin/dashboard" className="text-xs text-slate-500 hover:text-slate-300">
-              Admin Login
-            </Link>
-          )}
         </div>
 
         {/* Mobile hamburger */}
@@ -76,6 +64,7 @@ export default function Navbar() {
           className="lg:hidden text-slate-300 hover:text-white"
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label="Toggle menu"
+          aria-expanded={mobileOpen}
         >
           <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             {mobileOpen ? (
@@ -94,6 +83,7 @@ export default function Navbar() {
             <Link
               key={link.href}
               href={link.href}
+              onTouchStart={() => router.prefetch(link.href)}
               onClick={() => setMobileOpen(false)}
               className={`block rounded-lg px-3 py-2.5 text-sm transition-colors ${
                 isActive(link.href) ? 'bg-slate-800/60 text-white' : 'text-slate-300 hover:bg-slate-800/50'
@@ -109,13 +99,6 @@ export default function Navbar() {
               className="block rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 px-3 py-2 text-center text-sm font-medium text-white"
             >
               {navigation.hireMeLabel}
-            </Link>
-            <Link
-              href="/admin/dashboard"
-              onClick={() => setMobileOpen(false)}
-              className="text-center text-xs text-slate-400 hover:text-white py-1"
-            >
-              Admin Dashboard
             </Link>
           </div>
         </div>

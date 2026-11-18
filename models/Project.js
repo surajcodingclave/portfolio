@@ -5,6 +5,7 @@ const ProjectSchema = new mongoose.Schema({
   description: String,
   techStack: [String],
   imageUrl: String,
+  imageAlt: String,
   demoUrl: String,
   repoUrl: String,
   createdAt: { type: Date, default: Date.now },

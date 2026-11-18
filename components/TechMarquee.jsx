@@ -1,10 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
-import { getSiteContent } from '../lib/siteContent';
+import { useSite } from '../lib/siteContext';
 
 export default function TechMarquee() {
-  const { data: siteInfo } = useQuery(['siteInfo'], () => axios.get('/api/siteinfo').then((r) => r.data));
-  const techs = getSiteContent(siteInfo).marqueeSkills;
+  const { content: { marqueeSkills: techs } } = useSite();
 
   const doubled = [...techs, ...techs];
 
