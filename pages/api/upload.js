@@ -1,5 +1,5 @@
 import multer from 'multer';
-import { connectToDatabase } from '../../lib/mongoose';
+import { allowLocalFallback, connectToDatabase } from '../../lib/mongoose';
 import { requireAdmin } from '../../lib/requireAdmin';
 import Media from '../../models/Media';
 import { writeLocalMedia } from '../../lib/localStore';
@@ -37,7 +37,7 @@ export default async function handler(req, res) {
     const media = await Media.create({ bytes, contentType });
     return res.status(201).json({ url: '/api/media/' + media.id });
   } catch {
-    if (process.env.NODE_ENV === 'development') {
+    if (allowLocalFallback()) {
       const media = await writeLocalMedia(bytes, contentType);
       return res.status(201).json({ url: '/api/media/' + media.id });
     }

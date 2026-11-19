@@ -1,6 +1,6 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { connectToDatabase } from '../../../lib/mongoose';
+import { allowLocalFallback, connectToDatabase } from '../../../lib/mongoose';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { timingSafeEqual } from 'crypto';
@@ -28,7 +28,7 @@ export const authOptions = {
         try {
           await connectToDatabase();
         } catch (error) {
-          if (process.env.NODE_ENV !== 'development') throw error;
+          if (!allowLocalFallback()) throw error;
 
           const localEmail = String(process.env.ADMIN_EMAIL || '').trim().toLowerCase();
           const localPassword = Buffer.from(process.env.ADMIN_PASSWORD || '');

@@ -14,6 +14,32 @@ export default function Dashboard() {
 
   const [activeTab, setActiveTab] = useState('profile');
   const [notice, setNotice] = useState(null);
+  const [loginError, setLoginError] = useState('');
+  const [signingIn, setSigningIn] = useState(false);
+
+  async function handleLogin(event) {
+    event.preventDefault();
+    if (signingIn) return;
+    const credentials = new FormData(event.currentTarget);
+    setLoginError('');
+    setSigningIn(true);
+    try {
+      const result = await signIn('credentials', {
+        email: credentials.get('email'),
+        password: credentials.get('password'),
+        redirect: false,
+      });
+      if (result?.error === 'CredentialsSignin') {
+        setLoginError('Check your email and password and try again.');
+      } else if (!result?.ok) {
+        setLoginError('Sign-in is unavailable. Check the server configuration and try again.');
+      }
+    } catch {
+      setLoginError('Unable to reach the server. Try again.');
+    } finally {
+      setSigningIn(false);
+    }
+  }
 
   // Queries
   const { data: siteInfo, isError: siteInfoError, refetch: reloadsiteInfo } = useQuery(['siteInfo'], () => axios.get('/api/siteinfo?editor=1').then((r) => r.data), { enabled: !!session, refetchOnWindowFocus: false, staleTime: Infinity });
@@ -185,14 +211,23 @@ export default function Dashboard() {
         <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900/60 p-8 shadow-2xl backdrop-blur-md">
           <h2 className="text-2xl font-bold tracking-tight text-slate-50 text-center">Admin Portal Login</h2>
           <p className="mt-2 text-center text-sm text-slate-400">Sign in to manage and edit your portfolio</p>
-          <div className="mt-8">
-            <button
-              onClick={() => signIn()}
-              className="w-full rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 py-3 font-semibold text-white shadow-lg transition hover:from-blue-500 hover:to-blue-400"
-            >
-              Sign In with Credentials
+          <form onSubmit={handleLogin} className="mt-8 space-y-4">
+            <label className="block text-sm text-slate-200">
+              Email
+              <input name="email" type="email" autoComplete="username" required
+                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2" />
+            </label>
+            <label className="block text-sm text-slate-200">
+              Password
+              <input name="password" type="password" autoComplete="current-password" required
+                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2" />
+            </label>
+            {loginError && <p role="alert" className="text-sm text-rose-300">{loginError}</p>}
+            <button type="submit" disabled={signingIn}
+              className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white hover:bg-blue-500 disabled:opacity-50">
+              {signingIn ? 'Signing in…' : 'Sign in'}
             </button>
-          </div>
+          </form>
         </div>
       </div>
     );
@@ -250,7 +285,7 @@ export default function Dashboard() {
 
   const handleSaveProfile = (e) => {
     e.preventDefault();
-    if (updateSiteInfo.isLoading || !siteForm.name.trim()) {
+    if (uploadingAvatar || updateSiteInfo.isLoading || !siteForm.name.trim()) {
       if (!siteForm.name.trim()) setNotice({ error: true, text: 'Enter a name in Profile before publishing.' });
       return;
     }
@@ -529,7 +564,7 @@ export default function Dashboard() {
             <div className="flex flex-wrap items-center gap-3">
             <Link href="/" className="text-sm font-medium text-blue-300 hover:underline">View website</Link>
             <button
-              onClick={() => signOut()}
+              onClick={() => signOut({ callbackUrl: '/admin/dashboard' })}
               className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-2 text-sm text-slate-300 transition hover:bg-rose-950/40 hover:text-rose-300 self-start sm:self-auto"
             >
               <FaSignOutAlt /> Sign out

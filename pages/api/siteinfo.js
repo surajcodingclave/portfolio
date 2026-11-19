@@ -1,4 +1,4 @@
-import { connectToDatabase } from '../../lib/mongoose';
+import { allowLocalFallback, connectToDatabase } from '../../lib/mongoose';
 import { requireAdmin } from '../../lib/requireAdmin';
 import { readSiteInfo, refreshPages } from '../../lib/publicData';
 import SiteInfo from '../../models/SiteInfo';
@@ -35,7 +35,7 @@ export default async function handler(req, res) {
     await refreshPages(res);
     return res.json(updated);
   } catch (error) {
-    if (process.env.NODE_ENV === 'development') {
+    if (allowLocalFallback()) {
       if (req.method === 'GET') return res.json(await readLocalSiteInfo());
       const body = req.body || {};
       const changes = Object.fromEntries(fields.filter((key) => Object.hasOwn(body, key))

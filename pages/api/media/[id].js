@@ -1,4 +1,4 @@
-import { connectToDatabase } from '../../../lib/mongoose';
+import { allowLocalFallback, connectToDatabase } from '../../../lib/mongoose';
 import Media from '../../../models/Media';
 import { readLocalMedia } from '../../../lib/localStore';
 
@@ -19,7 +19,7 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     return res.end(req.method === 'HEAD' ? undefined : media.bytes);
   } catch {
-    if (process.env.NODE_ENV === 'development') {
+    if (allowLocalFallback()) {
       const media = await readLocalMedia(req.query.id);
       if (!media) return res.status(404).end();
       res.setHeader('Content-Type', media.contentType);

@@ -1,4 +1,4 @@
-import { connectToDatabase } from '../../lib/mongoose';
+import { allowLocalFallback, connectToDatabase } from '../../lib/mongoose';
 import { readSiteInfo } from '../../lib/publicData';
 import { publicRoutes, siteOrigin } from '../../lib/publicRoutes';
 import { readLocalSiteInfo } from '../../lib/localStore';
@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     const info = await readSiteInfo();
     origin = siteOrigin(info.siteContent?.seo?.siteUrl || undefined);
   } catch {
-    if (process.env.NODE_ENV === 'development') {
+    if (allowLocalFallback()) {
       const info = await readLocalSiteInfo();
       origin = siteOrigin(info.siteContent?.seo?.siteUrl || undefined);
     }
