@@ -29,9 +29,10 @@ export default function ProjectCard({ project }) {
           {project.demoUrl && (
             <a href={project.demoUrl} target="_blank" rel="noopener noreferrer"
               className="text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors">
-              {content.demoLinkLabel} &rarr;
+              Live demo &rarr;
             </a>
           )}
+          {!project.demoUrl && project.isSample && <span className="text-sm text-slate-500">Live demo link can be added from the admin panel.</span>}
           {project.repoUrl && (
             <a href={project.repoUrl} target="_blank" rel="noopener noreferrer"
               className="text-sm font-medium text-slate-400 hover:text-slate-300 transition-colors">

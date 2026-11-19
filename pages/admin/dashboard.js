@@ -967,7 +967,7 @@ export default function Dashboard() {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-medium uppercase tracking-wider text-slate-400 mb-1">Demo URL</label>
+                      <label className="block text-xs font-medium uppercase tracking-wider text-slate-400 mb-1">Live Demo URL</label>
                       <input
                         placeholder="https://..."
                         className="w-full rounded-lg border border-slate-700 bg-slate-800/50 px-4 py-2.5 text-sm text-slate-100 outline-none focus:border-blue-500"
