@@ -4,6 +4,8 @@ import { FaGithub, FaLinkedin, FaTwitter, FaWhatsapp, FaEnvelope, FaPhone, FaMap
 export default function ContactForm({ name, email, phone, location, content, socialLinks }) {
   const [form, setForm] = useState({ name: '', email: '', subject: '', projectType: '', timeline: '', message: '' });
   const [sent, setSent] = useState(false);
+  const whatsappNumber = (phone || '').replace(/\D/g, '');
+  const whatsappHref = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent('Hi Suraj, I would like to discuss a project.')}`;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -27,10 +29,23 @@ export default function ContactForm({ name, email, phone, location, content, soc
           <p className="mt-4 max-w-2xl mx-auto text-lg text-slate-300">
             {content.description}
           </p>
-          <div className="mx-auto mt-7 flex max-w-3xl flex-wrap items-center justify-center gap-x-6 gap-y-3 rounded-2xl border border-slate-700/60 bg-slate-900/55 px-5 py-4 text-sm">
-            <span className="text-base font-semibold text-slate-100">{name || 'Suraj Gupta'}</span>
-            {phone && <a className="text-slate-300 hover:text-blue-300" href={`tel:${phone}`}><FaPhone className="mr-2 inline" />{phone}</a>}
-            {email && <a className="text-slate-300 hover:text-blue-300" href={`mailto:${email}`}><FaEnvelope className="mr-2 inline" />{email}</a>}
+          <div className="mx-auto mt-7 grid max-w-5xl grid-cols-1 gap-3 rounded-2xl border border-slate-700/60 bg-slate-900/55 p-4 text-left sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-xl bg-slate-800/40 px-4 py-3">
+              <p className="text-xs font-medium uppercase tracking-wider text-slate-400">Name</p>
+              <p className="mt-1 text-sm font-semibold text-slate-100">{name || 'Suraj Gupta'}</p>
+            </div>
+            {phone && <a className="rounded-xl bg-slate-800/40 px-4 py-3 text-slate-200 hover:bg-slate-800" href={`tel:${phone}`}>
+              <p className="text-xs font-medium uppercase tracking-wider text-slate-400">Mobile</p>
+              <p className="mt-1 text-sm font-semibold"><FaPhone className="mr-2 inline text-blue-300" />{phone}</p>
+            </a>}
+            {email && <a className="rounded-xl bg-slate-800/40 px-4 py-3 text-slate-200 hover:bg-slate-800" href={`mailto:${email}`}>
+              <p className="text-xs font-medium uppercase tracking-wider text-slate-400">Email</p>
+              <p className="mt-1 break-all text-sm font-semibold"><FaEnvelope className="mr-2 inline text-blue-300" />{email}</p>
+            </a>}
+            <a className="rounded-xl bg-green-500/10 px-4 py-3 text-green-100 hover:bg-green-500/15" href={whatsappHref} target="_blank" rel="noopener noreferrer">
+              <p className="text-xs font-medium uppercase tracking-wider text-green-200/70">WhatsApp</p>
+              <p className="mt-1 text-sm font-semibold"><FaWhatsapp className="mr-2 inline" />Message me</p>
+            </a>
           </div>
         </div>
 
@@ -152,7 +167,7 @@ export default function ContactForm({ name, email, phone, location, content, soc
                   className="flex items-center gap-2 rounded-lg border border-slate-700/60 bg-slate-800/50 px-4 py-3 text-sm text-slate-200 hover:border-blue-500/50 hover:text-blue-300 transition">
                   <FaEnvelope className="h-5 w-5" /> Email
                 </a>}
-                <a href={`https://wa.me/${(phone || '').replace(/\D/g, '')}?text=${encodeURIComponent('Hi Suraj, I would like to discuss a project.')}`} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"
+                <a href={whatsappHref} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"
                   className="flex items-center gap-2 rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-200 hover:border-green-400/60 hover:bg-green-500/15 transition">
                   <FaWhatsapp className="h-5 w-5" /> WhatsApp
                 </a>
