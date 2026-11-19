@@ -6,6 +6,8 @@ const ProjectSchema = new mongoose.Schema({
   techStack: [String],
   imageUrl: String,
   imageAlt: String,
+  projectType: String,
+  isSample: { type: Boolean, default: false },
   demoUrl: String,
   repoUrl: String,
   createdAt: { type: Date, default: Date.now },

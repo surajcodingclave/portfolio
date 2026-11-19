@@ -20,6 +20,7 @@ export default function ProjectCard({ project }) {
           <h3 className="font-semibold text-slate-50 transition-colors group-hover:text-blue-300">
             {project.title}
           </h3>
+          {project.isSample && <span className="shrink-0 rounded-full border border-amber-400/30 bg-amber-400/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-amber-200">Sample</span>}
         </div>
         <p className="text-sm leading-relaxed text-slate-400">
           {project.description}
