@@ -36,7 +36,7 @@ export default function AboutPage({ origin, siteInfo }) {
                   {about.title}
                 </h1>
                 <p className="mt-6 text-lg leading-relaxed text-slate-300">
-                  {/5\s*\+?\s*years?|five years/i.test(siteInfo?.bio || '') ? about.whoDescription : (siteInfo?.bio || about.whoDescription)}
+                  {/(?:5\s*\+?\s*years?|five years|2\s*\+?\s*years?|two years)/i.test(siteInfo?.bio || '') ? about.whoDescription : (siteInfo?.bio || about.whoDescription)}
                 </p>
               </div>
             </div>

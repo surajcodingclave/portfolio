@@ -1,17 +1,19 @@
 import { useState } from 'react';
-import { FaGithub, FaLinkedin, FaTwitter, FaEnvelope, FaPhone, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaGithub, FaLinkedin, FaTwitter, FaWhatsapp, FaEnvelope, FaPhone, FaMapMarkerAlt } from 'react-icons/fa';
 
-export default function ContactForm({ email, phone, location, content, socialLinks }) {
+export default function ContactForm({ name, email, phone, location, content, socialLinks }) {
   const [form, setForm] = useState({ name: '', email: '', subject: '', projectType: '', timeline: '', message: '' });
   const [sent, setSent] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!email) return;
-    const mailto = `mailto:${email}?subject=${encodeURIComponent(form.subject)}&body=${encodeURIComponent(
-      `Name: ${form.name}\nEmail: ${form.email}\nProject type: ${form.projectType || 'Not specified'}\nTimeline: ${form.timeline || 'Not specified'}\n\n${form.message}`
-    )}`;
-    window.location.href = mailto;
+    const body = `Name: ${form.name}\nEmail: ${form.email}\nProject type: ${form.projectType || 'Not specified'}\nTimeline: ${form.timeline || 'Not specified'}\n\n${form.message}`;
+    if (email) {
+      window.location.href = `mailto:${email}?subject=${encodeURIComponent(form.subject)}&body=${encodeURIComponent(body)}`;
+    } else {
+      const phoneNumber = (phone || '').replace(/\D/g, '');
+      window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(`${form.subject}\n\n${body}`)}`, '_blank', 'noopener,noreferrer');
+    }
     setSent(true);
   };
 
@@ -25,14 +27,18 @@ export default function ContactForm({ email, phone, location, content, socialLin
           <p className="mt-4 max-w-2xl mx-auto text-lg text-slate-300">
             {content.description}
           </p>
+          <div className="mx-auto mt-7 flex max-w-3xl flex-wrap items-center justify-center gap-x-6 gap-y-3 rounded-2xl border border-slate-700/60 bg-slate-900/55 px-5 py-4 text-sm">
+            <span className="text-base font-semibold text-slate-100">{name || 'Suraj Gupta'}</span>
+            {phone && <a className="text-slate-300 hover:text-blue-300" href={`tel:${phone}`}><FaPhone className="mr-2 inline" />{phone}</a>}
+            {email && <a className="text-slate-300 hover:text-blue-300" href={`mailto:${email}`}><FaEnvelope className="mr-2 inline" />{email}</a>}
+          </div>
         </div>
 
         <div className="grid gap-12 lg:grid-cols-2">
           <div className="rounded-2xl border border-slate-700/60 bg-slate-900/55 p-6 sm:p-8">
             <h2 className="text-xl font-semibold text-slate-50 mb-6">{content.formTitle}</h2>
             <form onSubmit={handleSubmit} className="space-y-5">
-              {!email && <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm leading-6 text-amber-100">Project inquiry sending is being configured. You can still reach out through the social links on this page.</p>}
-              {email && <p className="-mt-2 text-sm text-slate-400">{content.projectBriefHint}</p>}
+              <p className="-mt-2 text-sm text-slate-400">{content.projectBriefHint}</p>
               <div>
                 <label htmlFor="inquiry-name" className="mb-1.5 block text-sm font-medium text-slate-300">{content.nameLabel}</label>
                 <input id="inquiry-name" name="name" autoComplete="name" type="text" required value={form.name}
@@ -82,9 +88,9 @@ export default function ContactForm({ email, phone, location, content, socialLin
                   className="w-full rounded-lg border border-slate-700 bg-slate-800/50 px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"
                   placeholder={content.messagePlaceholder} />
               </div>
-              <button type="submit" disabled={!email}
+              <button type="submit"
                 className="w-full rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 px-6 py-3 text-sm font-medium text-white shadow-lg shadow-blue-950/30 transition hover:from-blue-500 hover:to-blue-400 disabled:cursor-not-allowed disabled:opacity-50">
-                {sent ? content.sentButton : content.sendButton}
+                {sent ? content.sentButton : email ? content.sendButton : 'Continue in WhatsApp'}
               </button>
             </form>
           </div>
@@ -129,23 +135,27 @@ export default function ContactForm({ email, phone, location, content, socialLin
 
             <div className="rounded-2xl border border-slate-700/60 bg-slate-900/55 p-6 sm:p-8">
               <h2 className="text-xl font-semibold text-slate-50 mb-4">{content.socialTitle}</h2>
-              <div className="flex gap-3">
-                {socialLinks.github && <a href={socialLinks.github} target="_blank" rel="noopener noreferrer"
-                  className="flex h-11 w-11 items-center justify-center rounded-lg border border-slate-700/60 bg-slate-800/50 text-slate-400 hover:border-blue-500/50 hover:text-blue-300 transition">
-                  <FaGithub className="h-5 w-5" />
+              <div className="flex flex-wrap gap-3">
+                {socialLinks.github && <a href={socialLinks.github} target="_blank" rel="noopener noreferrer" aria-label="GitHub"
+                  className="flex items-center gap-2 rounded-lg border border-slate-700/60 bg-slate-800/50 px-4 py-3 text-sm text-slate-200 hover:border-blue-500/50 hover:text-blue-300 transition">
+                  <FaGithub className="h-5 w-5" /> GitHub
                 </a>}
-                {socialLinks.linkedin && <a href={socialLinks.linkedin} target="_blank" rel="noopener noreferrer"
-                  className="flex h-11 w-11 items-center justify-center rounded-lg border border-slate-700/60 bg-slate-800/50 text-slate-400 hover:border-blue-500/50 hover:text-blue-300 transition">
-                  <FaLinkedin className="h-5 w-5" />
+                {socialLinks.linkedin && <a href={socialLinks.linkedin} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"
+                  className="flex items-center gap-2 rounded-lg border border-slate-700/60 bg-slate-800/50 px-4 py-3 text-sm text-slate-200 hover:border-blue-500/50 hover:text-blue-300 transition">
+                  <FaLinkedin className="h-5 w-5" /> LinkedIn
                 </a>}
-                {socialLinks.twitter && <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer"
-                  className="flex h-11 w-11 items-center justify-center rounded-lg border border-slate-700/60 bg-slate-800/50 text-slate-400 hover:border-blue-500/50 hover:text-blue-300 transition">
-                  <FaTwitter className="h-5 w-5" />
+                {socialLinks.twitter && <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" aria-label="X / Twitter"
+                  className="flex items-center gap-2 rounded-lg border border-slate-700/60 bg-slate-800/50 px-4 py-3 text-sm text-slate-200 hover:border-blue-500/50 hover:text-blue-300 transition">
+                  <FaTwitter className="h-5 w-5" /> X / Twitter
                 </a>}
-                {email && <a href={`mailto:${email}`}
-                  className="flex h-11 w-11 items-center justify-center rounded-lg border border-slate-700/60 bg-slate-800/50 text-slate-400 hover:border-blue-500/50 hover:text-blue-300 transition">
-                  <FaEnvelope className="h-5 w-5" />
+                {email && <a href={`mailto:${email}`} aria-label="Email"
+                  className="flex items-center gap-2 rounded-lg border border-slate-700/60 bg-slate-800/50 px-4 py-3 text-sm text-slate-200 hover:border-blue-500/50 hover:text-blue-300 transition">
+                  <FaEnvelope className="h-5 w-5" /> Email
                 </a>}
+                <a href={`https://wa.me/${(phone || '').replace(/\D/g, '')}?text=${encodeURIComponent('Hi Suraj, I would like to discuss a project.')}`} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"
+                  className="flex items-center gap-2 rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-200 hover:border-green-400/60 hover:bg-green-500/15 transition">
+                  <FaWhatsapp className="h-5 w-5" /> WhatsApp
+                </a>
               </div>
             </div>
           </div>

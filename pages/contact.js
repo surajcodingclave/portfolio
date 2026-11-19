@@ -16,6 +16,7 @@ export default function ContactPage({ origin, siteInfo }) {
 
       <main className="flex-1 pt-24 pb-20">
         <ContactForm
+          name={siteInfo?.name || 'Suraj Gupta'}
           email={siteInfo?.contactEmail || ''}
           phone={siteInfo?.phone || ''}
           location={siteInfo?.location || ''}

@@ -30,6 +30,29 @@ export default function ExperiencePage({ origin, siteInfo, experience: experienc
               </p>
             </div>
 
+            <div className="mb-16 grid gap-4 sm:grid-cols-3">
+              <article className="rounded-2xl border border-slate-700/60 bg-slate-900/55 p-6 text-center">
+                <p className="text-3xl font-bold text-blue-300">3 years</p>
+                <p className="mt-2 text-sm text-slate-400">Web and app development experience</p>
+              </article>
+              <article className="rounded-2xl border border-slate-700/60 bg-slate-900/55 p-6 text-center">
+                <p className="text-3xl font-bold text-blue-300">30+</p>
+                <p className="mt-2 text-sm text-slate-400">Projects worked across</p>
+              </article>
+              <article className="rounded-2xl border border-slate-700/60 bg-slate-900/55 p-6 text-center">
+                <p className="text-3xl font-bold text-blue-300">Web · App · API</p>
+                <p className="mt-2 text-sm text-slate-400">Product work from interface to backend</p>
+              </article>
+            </div>
+
+            <div className="mb-16 rounded-2xl border border-blue-500/20 bg-blue-500/5 p-6 sm:p-8">
+              <h2 className="text-xl font-semibold text-slate-50">Experience across the product lifecycle</h2>
+              <p className="mt-3 leading-7 text-slate-300">Across these projects, my work has included clarifying requirements, shaping responsive interfaces, implementing application features, connecting APIs and databases, and refining flows from feedback. I keep scope and progress visible so clients can make informed decisions throughout delivery.</p>
+              <div className="mt-5 flex flex-wrap gap-2">
+                {['Requirements and scope', 'Responsive web development', 'Application features', 'API and database integration', 'Testing and launch support', 'Ongoing improvements'].map((item) => <span key={item} className="rounded-full border border-slate-700 bg-slate-900/70 px-3 py-1.5 text-xs text-slate-300">{item}</span>)}
+              </div>
+            </div>
+
             {experiences.length ? (
               <div className="relative border-l border-slate-800 ml-4 md:ml-8 pl-6 md:pl-8 space-y-12">
                 {experiences?.map((exp) => (
